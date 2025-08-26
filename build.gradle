@@ -1,0 +1,83 @@
+plugins {
+    id "java"
+    id 'org.springframework.boot' version '3.5.5'
+    id 'jacoco'
+}
+
+apply plugin: 'java'
+apply plugin: 'org.springframework.boot'
+apply plugin: 'jacoco'
+
+ext {
+    springbootVersion = '3.5.5'
+}
+
+group = 'com.trecapps'
+version = '1.0-SNAPSHOT'
+
+repositories {
+    mavenCentral()
+
+    repositories{
+        maven {
+            url azureRepoUrl
+            name 'tcMavenRepo'
+            credentials {
+                username azureRepoUsername
+                password azureRepoPassword
+            }
+        }
+    }
+}
+
+jar{
+    //archiveClassifier=''
+    enabled = false
+}
+
+dependencies {
+    implementation 'org.projectlombok:lombok:1.18.36'
+    annotationProcessor 'org.projectlombok:lombok:1.18.36'
+
+    //Enable Trec-Auth
+    implementation 'com.trecapps.auth:TrecAuth:0.9.13-alpha'
+    implementation 'com.trecapps:notification-base:0.0.17'
+    implementation "com.microsoft.azure:applicationinsights-runtime-attach:3.4.19"
+
+    implementation("org.springframework.boot:spring-boot-starter-webflux:$springbootVersion")
+
+    // Security Dependencies
+    implementation "org.springframework.boot:spring-boot-starter-security:$springbootVersion"
+    implementation "org.springframework.boot:spring-boot-starter-quartz:$springbootVersion"
+    implementation 'com.zaxxer:HikariCP:6.2.1' // Used to resolve java.lang.AbstractMethodError: Receiver class
+    // com.zaxxer.hikari.metrics.micrometer.MicrometerMetricsTrackerFactory
+
+    // DB Support
+    implementation 'org.hibernate.orm:hibernate-core:6.4.4.Final'
+    implementation 'jakarta.validation:jakarta.validation-api:3.0.2'
+    implementation 'jakarta.persistence:jakarta.persistence-api:3.1.0'
+    implementation "org.springframework.boot:spring-boot-starter-data-jpa:${springbootVersion}"
+
+    // Azure Resources
+    implementation 'com.azure:azure-messaging-servicebus:7.17.4'
+    implementation 'com.azure:azure-identity:1.17.0'
+    implementation 'com.trecapps.smpipeline:sm-pipeline:0.0.7'
+
+
+    implementation 'com.mysql:mysql-connector-j:9.4.0' // mySQL
+
+    implementation 'com.azure:azure-storage-blob:+'
+
+    implementation 'com.auth0:java-jwt:+'
+    implementation 'org.bouncycastle:bcpkix-jdk18on:1.78.1'
+    implementation "com.azure.spring:spring-cloud-azure-starter-keyvault:5.19.0" // Getting secret info from Azure Key Vault
+
+
+
+    testImplementation platform('org.junit:junit-bom:5.10.0')
+    testImplementation 'org.junit.jupiter:junit-jupiter'
+}
+
+test {
+    useJUnitPlatform()
+}
