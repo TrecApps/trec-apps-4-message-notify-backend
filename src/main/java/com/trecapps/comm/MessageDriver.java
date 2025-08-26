@@ -10,6 +10,7 @@ import org.springframework.web.reactive.config.EnableWebFlux;
 @ComponentScan({
         "com.trecapps.auth.common.*",               // Authentication library
         "com.trecapps.auth.webflux.*",
+        "com.trecapps.comm.common.*",
         "com.trecapps.comm.messages.*"
 })
 @EnableWebFlux
