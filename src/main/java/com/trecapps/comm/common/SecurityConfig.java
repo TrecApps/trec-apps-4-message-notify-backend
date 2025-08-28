@@ -33,7 +33,9 @@ public class SecurityConfig {
                 .cors(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests((req) ->
                         req
-                                .requestMatchers("/Notifications/**", "/Notifications/*", "/Messages/**", "/Messages/*")
+                                .requestMatchers("/Notifications/**", "/Notifications/*",
+                                        "/Messages/**", "/Messages/*",
+                                        "/Conversations/**", "/Conversations/*")
                                 .authenticated()
                                 .anyRequest()
                                 .permitAll()
