@@ -40,7 +40,7 @@ dependencies {
     annotationProcessor 'org.projectlombok:lombok:1.18.36'
 
     //Enable Trec-Auth
-    implementation 'com.trecapps.auth:TrecAuth:0.9.32-alpha'
+    implementation 'com.trecapps.auth:TrecAuth:0.9.33-alpha'
     implementation 'com.trecapps:notification-base:0.0.17'
     implementation "com.microsoft.azure:applicationinsights-runtime-attach:3.4.19"
 
