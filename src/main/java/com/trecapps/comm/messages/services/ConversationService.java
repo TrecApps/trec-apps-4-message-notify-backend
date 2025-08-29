@@ -2,6 +2,7 @@ package com.trecapps.comm.messages.services;
 
 import com.trecapps.auth.common.models.TcBrands;
 import com.trecapps.auth.common.models.TcUser;
+import com.trecapps.auth.common.models.TrecAuthentication;
 import com.trecapps.auth.webflux.services.IUserStorageServiceAsync;
 import com.trecapps.base.notify.models.ResponseObj;
 import com.trecapps.comm.messages.models.Conversation;
@@ -14,7 +15,7 @@ import reactor.core.publisher.Mono;
 import java.util.*;
 
 @Service
-public class ConversationService {
+public class ConversationService extends ProfileSorterService{
 
     @Autowired
     ConversationRepo conversationRepo;
@@ -75,12 +76,9 @@ public class ConversationService {
                 ;
     }
 
-    public Mono<List<Conversation>> getConversations(TcUser user, TcBrands brand, String appId){
-        String profile = brand == null ?
-                String.format("User-%s", user.getId()) :
-                String.format("Brand-%s", brand.getId());
+    public Mono<List<Conversation>> getConversations(TrecAuthentication auth, String appId){
 
-        return Mono.just(profile)
+        return useProfile(auth)
                 .flatMap((String requester) -> {
                     return appId != null ?
                             conversationRepo.getConversationsByProfileAndApp(requester, appId).collectList() :
