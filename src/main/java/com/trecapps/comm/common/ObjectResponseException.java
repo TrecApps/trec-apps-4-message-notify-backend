@@ -1,6 +1,5 @@
 package com.trecapps.comm.common;
 
-import com.trecapps.sm.common.models.ResponseObj;
 import lombok.Getter;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;

@@ -40,7 +40,7 @@ dependencies {
     annotationProcessor 'org.projectlombok:lombok:1.18.36'
 
     //Enable Trec-Auth
-    implementation 'com.trecapps.auth:TrecAuth:0.9.33-alpha'
+    implementation 'com.trecapps.auth:TrecAuth:0.9.34-alpha'
     implementation 'com.trecapps:notification-base:0.0.17'
     implementation "com.microsoft.azure:applicationinsights-runtime-attach:3.4.19"
 
@@ -63,11 +63,13 @@ dependencies {
     implementation 'com.azure:azure-identity:1.17.0'
     implementation 'com.trecapps.smpipeline:sm-pipeline:0.0.7'
 
+    implementation 'com.mysql:mysql-connector-j:9.4.0' // mySQL
+
 
     // For Notifications
-    implementation "org.springframework.boot:spring-boot-starter-data-cassandra:$springbootVersion"
+    implementation "org.springframework.boot:spring-boot-starter-data-cassandra-reactive:$springbootVersion"
     // For Messages
-    implementation "org.springframework.boot:spring-boot-starter-data-mongodb:$springbootVersion"
+    implementation "org.springframework.boot:spring-boot-starter-data-mongodb-reactive:$springbootVersion"
 
     implementation 'com.azure:azure-storage-blob:+'
 
