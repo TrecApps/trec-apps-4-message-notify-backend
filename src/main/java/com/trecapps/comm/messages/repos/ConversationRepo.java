@@ -1,6 +1,5 @@
 package com.trecapps.comm.messages.repos;
 
-
 import com.trecapps.comm.messages.models.Conversation;
 import org.springframework.data.mongodb.repository.Query;
 import org.springframework.data.mongodb.repository.ReactiveMongoRepository;
