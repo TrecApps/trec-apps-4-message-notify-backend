@@ -19,14 +19,13 @@ import org.springframework.web.reactive.config.EnableWebFlux;
                 MongoDataAutoConfiguration.class,
                 MongoReactiveDataAutoConfiguration.class,
                 MongoReactiveAutoConfiguration.class,
-
                 MongoReactiveRepositoriesAutoConfiguration.class
         }
 )
 @ComponentScan(basePackages = {
         "com.trecapps.auth.common.*",               // Authentication library
         "com.trecapps.auth.webflux.*",
-        "com.trecapps.comm.common.*",
+        "com.trecapps.comm.common",
         "com.trecapps.comm.notifications.*"
 }, excludeFilters = @ComponentScan.Filter(
         type = FilterType.REGEX,

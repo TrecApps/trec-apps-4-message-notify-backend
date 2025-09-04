@@ -10,7 +10,6 @@ import org.springframework.boot.autoconfigure.data.cassandra.CassandraReactiveRe
 import org.springframework.boot.autoconfigure.reactor.ReactorAutoConfiguration;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.FilterType;
-import org.springframework.data.mongodb.repository.config.EnableMongoRepositories;
 import org.springframework.data.mongodb.repository.config.EnableReactiveMongoRepositories;
 import org.springframework.web.reactive.config.EnableWebFlux;
 
@@ -20,7 +19,7 @@ import org.springframework.web.reactive.config.EnableWebFlux;
 @ComponentScan(basePackages = {
         "com.trecapps.auth.common.*",               // Authentication library
         "com.trecapps.auth.webflux.*",
-        "com.trecapps.comm.common.*",
+        "com.trecapps.comm.common",
         "com.trecapps.comm.messages.*"
 }, excludeFilters = @ComponentScan.Filter(
         type = FilterType.REGEX,

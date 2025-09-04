@@ -1,50 +1,62 @@
 package com.trecapps.comm.common;
 
-import com.trecapps.auth.web.services.TrecAuthManagerWeb;
-import com.trecapps.auth.web.services.TrecSecurityContextServlet;
+import com.trecapps.auth.webflux.services.TrecAuthManagerReactive;
+import com.trecapps.auth.webflux.services.TrecSecurityContextReactive;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.annotation.Order;
-import org.springframework.security.config.annotation.web.builders.HttpSecurity;
-import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
-import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
-import org.springframework.security.config.http.SessionCreationPolicy;
-import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.config.annotation.web.reactive.EnableWebFluxSecurity;
+import org.springframework.security.config.web.server.ServerHttpSecurity;
+import org.springframework.security.web.server.SecurityWebFilterChain;
 
-@EnableWebSecurity
 @Configuration
-@Order(2)
+@EnableWebFluxSecurity
+@Slf4j
 public class SecurityConfig {
 
     @Autowired
-    SecurityConfig(TrecAuthManagerWeb trecAuthManagerWeb1, TrecSecurityContextServlet trecSecurityContext1)
+    SecurityConfig(
+                   TrecSecurityContextReactive trecSecurityContext1,
+                   TrecAuthManagerReactive trecAuthManagerReactive)
     {
-        trecAuthManagerWeb = trecAuthManagerWeb1;
         trecSecurityContext = trecSecurityContext1;
+        this.trecAuthManagerReactive = trecAuthManagerReactive;
     }
-    TrecAuthManagerWeb trecAuthManagerWeb;
-    TrecSecurityContextServlet trecSecurityContext;
+    TrecSecurityContextReactive trecSecurityContext;
+    TrecAuthManagerReactive trecAuthManagerReactive;
+
+    String[] restrictedEndpoints = {
+            "/Notifications/*",
+            "/Notifications/**"
+
+    };
+
+    String[] verifiedEndpoints = {
+            "/Messages/*",
+            "/Messages/**",
+            "/Conversations/**",
+            "/Conversations/*"
+    };
 
     @Bean
-    protected SecurityFilterChain configure(HttpSecurity security) throws Exception
-    {
-        security = security.csrf(AbstractHttpConfigurer::disable)
-                .cors(AbstractHttpConfigurer::disable)
-                .authorizeHttpRequests((req) ->
-                        req
-                                .requestMatchers("/Notifications/**", "/Notifications/*",
-                                        "/Messages/**", "/Messages/*",
-                                        "/Conversations/**", "/Conversations/*")
-                                .authenticated()
-                                .anyRequest()
-                                .permitAll()
-                )
-                .authenticationManager(trecAuthManagerWeb)
-                .securityContext((cust)->
-                        cust.securityContextRepository(trecSecurityContext)
-                )
-                .sessionManagement((cust)-> cust.sessionCreationPolicy(SessionCreationPolicy.STATELESS));
-        return security.build();
+    public SecurityWebFilterChain securityWebFilterChain(
+            ServerHttpSecurity http) {
+        log.info("Preparing Security Bean");
+
+        return http
+                .csrf(ServerHttpSecurity.CsrfSpec::disable)
+                .httpBasic(ServerHttpSecurity.HttpBasicSpec::disable)
+                .formLogin(ServerHttpSecurity.FormLoginSpec::disable)
+                .logout(ServerHttpSecurity.LogoutSpec::disable)
+                .authorizeExchange(exchanges -> exchanges
+                        .pathMatchers(restrictedEndpoints).authenticated()
+                        .pathMatchers(verifiedEndpoints).hasAuthority("TREC_VERIFIED")
+                        .anyExchange().permitAll())
+                .authenticationManager(trecAuthManagerReactive)
+                .securityContextRepository(trecSecurityContext)
+
+                .build();
     }
 }
