@@ -4,7 +4,6 @@ import com.microsoft.applicationinsights.attach.ApplicationInsights;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.ComponentScan;
-import org.springframework.data.cassandra.repository.config.EnableCassandraRepositories;
 import org.springframework.web.reactive.config.EnableWebFlux;
 
 @SpringBootApplication
@@ -15,10 +14,10 @@ import org.springframework.web.reactive.config.EnableWebFlux;
         "com.trecapps.comm.notifications.*"
 })
 @EnableWebFlux
-@EnableCassandraRepositories
 public class NotifyDriver {
     public static void main(String[] args) {
         ApplicationInsights.attach();
         SpringApplication.run(NotifyDriver.class, args);
     }
+
 }
