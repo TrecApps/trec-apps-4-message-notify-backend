@@ -1,6 +1,6 @@
 plugins {
     id "java"
-    id 'org.springframework.boot' version '3.5.5'
+    id 'org.springframework.boot' version '3.5.6'
     id 'jacoco'
 }
 
@@ -9,7 +9,7 @@ apply plugin: 'org.springframework.boot'
 apply plugin: 'jacoco'
 
 ext {
-    springbootVersion = '3.5.5'
+    springbootVersion = '3.5.6'
 }
 
 group = 'com.trecapps'
@@ -40,7 +40,7 @@ dependencies {
     annotationProcessor 'org.projectlombok:lombok:1.18.36'
 
     //Enable Trec-Auth
-    implementation 'com.trecapps.auth:TrecAuth:0.9.34-alpha'
+    implementation 'com.trecapps.auth:TrecAuth:0.9.35-alpha'
     implementation 'com.trecapps:notification-base:0.0.17'
     implementation "com.microsoft.azure:applicationinsights-runtime-attach:3.4.19"
 
@@ -75,7 +75,7 @@ dependencies {
 
     implementation 'com.auth0:java-jwt:+'
     implementation 'org.bouncycastle:bcpkix-jdk18on:1.78.1'
-    implementation "com.azure.spring:spring-cloud-azure-starter-keyvault:5.19.0" // Getting secret info from Azure Key Vault
+    implementation "com.azure.spring:spring-cloud-azure-starter-keyvault:5.23.0" // Getting secret info from Azure Key Vault
 
 
 
