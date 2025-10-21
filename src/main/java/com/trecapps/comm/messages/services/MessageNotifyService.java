@@ -6,6 +6,7 @@ import com.trecapps.comm.messages.models.Message;
 import com.trecapps.comm.notifications.model.NotificationPost;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
+import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -13,17 +14,19 @@ import reactor.core.publisher.Mono;
 import java.util.List;
 
 @Service
-@ConditionalOnBean(value = IMessageProducer.class)
-public class NotificationService {
+//@ConditionalOnBean(value = IMessageProducer.class)
+//@Order(1)
+public class MessageNotifyService {
 
     IMessageProducer messageProducer;
 
     @Autowired
-    NotificationService(IMessageProducer producer){
+    MessageNotifyService(@Autowired(required = false) IMessageProducer producer){
         this.messageProducer = producer;
     }
 
     Mono<Message> notifyOnMessage(Message newMessage, Conversation conversation, String senderDisplayName) {
+        if(this.messageProducer == null) return Mono.just(newMessage);
         return Mono.just(newMessage)
                 .flatMapMany((Message message) -> {
                     List<String> profiles = conversation.getProfiles().stream()

@@ -1,7 +1,5 @@
 package com.trecapps.comm.messages.services;
 
-import com.trecapps.auth.common.models.TcBrands;
-import com.trecapps.auth.common.models.TcUser;
 import com.trecapps.auth.common.models.TrecAuthentication;
 import com.trecapps.base.notify.models.ResponseObj;
 import com.trecapps.comm.common.ObjectResponseException;
@@ -10,6 +8,7 @@ import com.trecapps.comm.messages.repos.ConversationRepo;
 import com.trecapps.comm.messages.repos.MessageRepo;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.annotation.Order;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -22,19 +21,29 @@ import java.util.Set;
 import java.util.UUID;
 
 @Service
+//@Order(2)
 public class MessageService extends ProfileSorterService{
 
-    @Autowired
     MessageRepo messageRepo;
 
-    @Autowired
     ConversationRepo conversationRepo;
 
-    @Autowired(required = false)
-    NotificationService notifyService;
+    MessageNotifyService notifyService;
 
-    @Value("${trecapps.message.page-size:100}")
     int pageSize;
+
+    @Autowired
+    MessageService(
+            MessageRepo messageRepo,
+            ConversationRepo conversationRepo,
+            MessageNotifyService notifyService,
+            @Value("${trecapps.message.page-size:100}")int pageSize
+    ){
+        this.notifyService = notifyService;
+        this.messageRepo = messageRepo;
+        this.pageSize = pageSize;
+        this.conversationRepo = conversationRepo;
+    }
 
 //    Mono<Message> nextMessagePage(Conversation conversation1, Message message, int pageCount){
 //        return Mono.just(conversation1)
@@ -102,7 +111,7 @@ public class MessageService extends ProfileSorterService{
                                             return messageRepo.save(newMessage);
                                         })
                                         .flatMap((Message nm) -> {
-                                            if(this.notifyService == null) return Mono.just(nm);
+                                            //if(this.notifyService == null) return Mono.just(nm);
 
                                             String displayName = auth.getUser().getDisplayName();
                                             if(auth.getBrand() != null)
