@@ -30,6 +30,9 @@ public class MessageService extends ProfileSorterService{
     @Autowired
     ConversationRepo conversationRepo;
 
+    @Autowired(required = false)
+    NotificationService notifyService;
+
     @Value("${trecapps.message.page-size:100}")
     int pageSize;
 
@@ -97,6 +100,15 @@ public class MessageService extends ProfileSorterService{
                                             }
 
                                             return messageRepo.save(newMessage);
+                                        })
+                                        .flatMap((Message nm) -> {
+                                            if(this.notifyService == null) return Mono.just(nm);
+
+                                            String displayName = auth.getUser().getDisplayName();
+                                            if(auth.getBrand() != null)
+                                                displayName = auth.getBrand().getName();
+
+                                            return this.notifyService.notifyOnMessage(nm, conversation, displayName);
                                         });
                             });
                 })
