@@ -4,6 +4,7 @@ import com.trecapps.auth.common.models.TcBrands;
 import com.trecapps.auth.common.models.TrecAuthentication;
 import com.trecapps.base.notify.models.*;
 import com.trecapps.comm.notifications.model.NotificationEntry;
+import com.trecapps.comm.notifications.model.NotificationEntryId;
 import com.trecapps.comm.notifications.model.NotificationPost;
 import com.trecapps.comm.notifications.model.NotificationRepo;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -11,6 +12,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
 
+import java.time.Instant;
 import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -31,20 +33,28 @@ public class NotificationService {
         return Mono.just(post)
                 .map((NotificationPost notifyPost) -> {
                     NotificationEntry entry = new NotificationEntry();
+                    NotificationEntryId id = new NotificationEntryId();
 
-                    entry.setId(UUID.randomUUID());
-                    entry.setCreateTime(OffsetDateTime.now());
+                    id.setAppId(notifyPost.getAppId());
+                    String brandId = notifyPost.getBrandId();
+                    id.setProfileId(
+                            brandId == null ?
+                                    String.format("User-%s", notifyPost.getUserId()) :
+                                    String.format("Brand-%s", brandId)
+                    );
+                    id.setCreateTime(Instant.now());
+                    id.setUniqueId(UUID.randomUUID().toString());
+
+                    entry.setId(id);
                     entry.setStatus(NotificationStatus.UNSEEN);
-                    entry.setUpdateTime(entry.getCreateTime());
+                    entry.setUpdateTime(id.getCreateTime());
 
                     entry.setCategory(notifyPost.getCategory());
                     entry.setMessage(notifyPost.getMessage());
                     entry.setRelevantId(notifyPost.getRelevantId());
+                    entry.setRelevantIdSecond(notifyPost.getRelevantIdSecondary());
                     entry.setImageId(notifyPost.getImageId());
                     entry.setType(notifyPost.getType());
-                    entry.setBrandId(notifyPost.getBrandId());
-                    entry.setAppId(notifyPost.getAppId());
-                    entry.setUserId(notifyPost.getUserId());
                     return entry;
                 })
                 .flatMap((NotificationEntry entry) -> this.notificationRepo.save(entry))
@@ -58,7 +68,7 @@ public class NotificationService {
     {
         return Mono.just(markPost)
                 .flatMap((NotificationMarkPost mp) ->
-                    this.notificationRepo.findAllById(mp.getNotifications().stream().map(UUID::fromString).toList()).collectList()
+                    this.notificationRepo.findAllByUniqueIds(mp.getNotifications()).collectList()
                 )
                 .map((List<NotificationEntry> entries) -> {
                     for(NotificationEntry entry: entries)
@@ -91,7 +101,7 @@ public class NotificationService {
                         notification.setPost(entry.getNotifyPost());
                         notification.setNotificationId(entry.getId().toString());
                         notification.setStatus(entry.getStatus());
-                        notification.setApp(entry.getAppId());
+                        notification.setApp(entry.getId().getAppId());
                         return notification;
                     }).toList();
                 });
@@ -101,7 +111,7 @@ public class NotificationService {
     {
         return Mono.just(ids)
                 .flatMap((List<String> notifyIds) ->
-                        this.notificationRepo.findAllById(notifyIds.stream().map(UUID::fromString).toList()).collectList()
+                        this.notificationRepo.findAllByUniqueIds(notifyIds).collectList()
                 )
                 .map((List<NotificationEntry> entries) -> {
                     for(NotificationEntry entry: entries)
@@ -131,20 +141,14 @@ public class NotificationService {
 
                     NotificationEntry entry = entries.get(entries.size()-1);
 
-                    String brandId = entry.getBrandId();
-                    String userId = entry.getUserId();
-                    String appId1 = entry.getAppId();
+                    String profile = entry.getId().getProfileId();
+                    String appId1 = entry.getId().getAppId();
 
-                    if(brandId == null)
-                    {
+
                         if(appId1 == null)
-                            notificationRepo.deleteEntriesByUser(userId, entry.getUpdateTime()).subscribe();
-                        else notificationRepo.deleteEntriesByUser(userId, appId1, entry.getUpdateTime()).subscribe();
-                    } else {
-                        if(appId1 == null)
-                            notificationRepo.deleteEntriesByBrand(brandId, entry.getUpdateTime()).subscribe();
-                        else notificationRepo.deleteEntriesByBrand(brandId, appId1, entry.getUpdateTime()).subscribe();
-                    }
+                            notificationRepo.deleteEntriesByProfile(profile, entry.getUpdateTime()).subscribe();
+                        else notificationRepo.deleteEntriesByProfile(profile, appId1, entry.getUpdateTime()).subscribe();
+
                     return ResponseObj.getInstance(HttpStatus.OK, "Success!");
                 });
     }

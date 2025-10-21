@@ -12,6 +12,7 @@ public class NotificationPost {
     String appId;       // The App that sent this
 
     String relevantId;  // The id of the content this is relevant to
+    String relevantIdSecondary;
 
     // Image Information
     ImageEndpointType type = ImageEndpointType.REGULAR;

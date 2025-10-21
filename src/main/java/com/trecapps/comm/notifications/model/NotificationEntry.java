@@ -11,44 +11,50 @@ import org.springframework.data.cassandra.core.mapping.Indexed;
 import org.springframework.data.cassandra.core.mapping.PrimaryKey;
 import org.springframework.data.cassandra.core.mapping.Table;
 
+import java.time.Instant;
 import java.time.OffsetDateTime;
+import java.time.ZoneOffset;
 import java.util.UUID;
 
 @Data
-@Table("notificationEntry")
+@Table("notification_entry")
 public class NotificationEntry {
 
     @PrimaryKey
-    UUID id;
-
-    @Indexed
-    String userId;
+    NotificationEntryId id;
 
     @Enumerated(EnumType.STRING)
     ImageEndpointType type = ImageEndpointType.REGULAR;
 
+    @Column("image_id")
     String imageId;
+
 
     String message;
 
     String category;
 
-    OffsetDateTime createTime;
-    OffsetDateTime updateTime;
+    @Column("update_time")
+    Instant updateTime;
 
-    String appId;
-    String brandId;
+
 
     String relevantId;
+    String relevantIdSecond;
 
     @Enumerated(EnumType.STRING)
     NotificationStatus status = NotificationStatus.UNSEEN;
 
+    public Instant getTime(){
+        return updateTime == null ? id.createTime : updateTime;
+    }
+
     public NotifyPost getNotifyPost(){
         NotifyPost notifyPost = new NotifyPost();
-        notifyPost.setAppSpecific(appId != null);
+        notifyPost.setAppSpecific(id.getAppId() != null);
         notifyPost.setCategory(category);
-        notifyPost.setTime(updateTime);
+        Instant time = getTime();
+        notifyPost.setTime(time.atOffset(ZoneOffset.UTC));
         notifyPost.setType(type);
         notifyPost.setMessage(message);
         notifyPost.setImageId(imageId);
@@ -58,10 +64,14 @@ public class NotificationEntry {
 
     public boolean isOwner(String userId, String brandId, String appId)
     {
-        boolean byBrand = this.brandId == null ? (brandId == null) : brandId.equals(this.brandId);
-        boolean byApp = this.appId == null || this.appId.equals(appId);
-        boolean byUser = this.userId == null || this.userId.equals(userId);
+        boolean byApp = this.id.appId == null || this.id.appId.contains(appId);
+        boolean byProfile = false;
+        if(id.profileId.startsWith("User-")){
+            byProfile = id.profileId.substring(5).equals(userId);
+        } else if(id.profileId.startsWith("Brand-")){
+            byProfile = id.profileId.substring(6).equals(brandId);
+        }
 
-        return (byUser || byBrand) && byApp;
+        return (byProfile) && byApp;
     }
 }
