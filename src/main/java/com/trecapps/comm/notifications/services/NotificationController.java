@@ -15,6 +15,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 import reactor.core.publisher.Mono;
 
+import java.time.OffsetDateTime;
 import java.util.List;
 
 @RestController
@@ -75,6 +76,17 @@ public class NotificationController {
     ){
         return notificationService.getNotifications(
                 (TrecAuthentication) authentication, appId, size, page);
+
+    }
+
+    @GetMapping("/After")
+    Mono<List<Notification>> getNotifications(
+            Authentication authentication,
+            @RequestParam String appId,
+            @RequestParam OffsetDateTime time
+            ){
+        return notificationService.getNotificationsAfter(
+                (TrecAuthentication) authentication, appId, time);
 
     }
 

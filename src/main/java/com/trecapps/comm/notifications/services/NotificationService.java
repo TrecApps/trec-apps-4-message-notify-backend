@@ -86,6 +86,27 @@ public class NotificationService {
                 });
     }
 
+    Mono<List<Notification>> getNotificationsAfter(TrecAuthentication auth, String appId, OffsetDateTime time){
+        return Mono.just(auth)
+                .flatMap((TrecAuthentication notifyAuth) -> {
+                    TcBrands brandId = notifyAuth.getBrand();
+                    if(brandId != null)
+                        return notificationRepo.getNotificationsByAfter(String.format("Brand-%s",brandId.getId()), appId, time.toInstant()).collectList();
+                    return notificationRepo.getNotificationsByAfter(
+                            String.format("User-%s",notifyAuth.getUser().getId()), appId, time.toInstant()).collectList();
+                })
+                .map((List<NotificationEntry> entries) -> {
+                    return entries.stream().map((NotificationEntry entry) -> {
+                        Notification notification = new Notification();
+                        notification.setPost(entry.getNotifyPost());
+                        notification.setNotificationId(entry.getId().getUniqueId());
+                        notification.setStatus(entry.getStatus());
+                        notification.setApp(entry.getId().getAppId());
+                        return notification;
+                    }).toList();
+                });
+    }
+
     Mono<List<Notification>> getNotifications(TrecAuthentication auth, String appId, int size, int page)
     {
         return Mono.just(auth)
@@ -99,7 +120,7 @@ public class NotificationService {
                     return entries.stream().map((NotificationEntry entry) -> {
                         Notification notification = new Notification();
                         notification.setPost(entry.getNotifyPost());
-                        notification.setNotificationId(entry.getId().toString());
+                        notification.setNotificationId(entry.getId().getUniqueId());
                         notification.setStatus(entry.getStatus());
                         notification.setApp(entry.getId().getAppId());
                         return notification;
