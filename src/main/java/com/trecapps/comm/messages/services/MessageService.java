@@ -153,6 +153,31 @@ public class MessageService extends ProfileSorterService{
                 });
     }
 
+    public Mono<List<Message>> getLatestMessages(TrecAuthentication auth, String conversationId, OffsetDateTime time){
+        return useProfile(auth)
+                .flatMap((String profile)-> {
+                    UUID conId = null;
+                    try{
+                        conId = UUID.fromString(conversationId);
+                    } catch(IllegalArgumentException e){
+                        throw new ObjectResponseException(HttpStatus.BAD_REQUEST, "Conversation needs to be in UUID format!");
+                    }
+
+                    UUID finalConId = conId;
+                    return conversationRepo.findById(conId).defaultIfEmpty(new Conversation())
+                            .doOnNext((Conversation conversation) -> {
+                                if(conversation.getId() == null)
+                                    throw new ObjectResponseException(HttpStatus.NOT_FOUND, "Conversation not found");
+
+                                if(!conversation.getProfiles().contains(profile))
+                                    throw new ObjectResponseException(HttpStatus.FORBIDDEN, "You are not part of this conversation!");
+                            });
+                })
+                .flatMap((Conversation conversation) -> {
+                    return messageRepo.findMessagesAfter(conversation.getId(), time).collectList();
+                });
+    }
+
     public Mono<ResponseObj> markReaction(TrecAuthentication auth, List<String> messageIds, String reactionType){
         return useProfile(auth)
                 .flatMap((String profile)-> {

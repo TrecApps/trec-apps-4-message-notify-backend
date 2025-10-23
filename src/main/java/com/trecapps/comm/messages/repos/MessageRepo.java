@@ -6,13 +6,19 @@ import org.springframework.data.mongodb.repository.ReactiveMongoRepository;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
+import java.time.OffsetDateTime;
 import java.util.UUID;
 
 public interface MessageRepo extends ReactiveMongoRepository<Message, UUID> {
 
-    @Query("{'conversationId': id, 'page': page}")
+    @Query("{'conversationId': ?0, 'page': ?1}")
     Flux<Message> findByConversationAndPageNumber(UUID id, int page);
 
-    @Query(value = "{'conversationId': id, 'page': page}", count = true)
+    @Query("{'conversationId': ?0, '$gt': {'firstMade' : ?1}}")
+    Flux<Message> findMessagesAfter(UUID id, OffsetDateTime after);
+
+    @Query(value = "{'conversationId': ?0, 'page': ?1}", count = true)
     Mono<Long> countByConversationAndPageNumber(UUID id, int page);
+
+
 }

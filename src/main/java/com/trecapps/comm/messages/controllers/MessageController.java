@@ -11,6 +11,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 import reactor.core.publisher.Mono;
 
+import java.time.OffsetDateTime;
 import java.util.List;
 
 @RestController
@@ -43,6 +44,20 @@ public class MessageController extends BaseController{
                     (TrecAuthentication) authentication,
                     conversationId,
                     page
+            );
+        }
+    }
+
+    @GetMapping("/latest")
+    Mono<List<Message>> getLatestMessages(
+            Authentication authentication,
+            @RequestParam String conversationId,
+            @RequestParam OffsetDateTime time){
+        {
+            return service.getLatestMessages(
+                    (TrecAuthentication) authentication,
+                    conversationId,
+                    time
             );
         }
     }
