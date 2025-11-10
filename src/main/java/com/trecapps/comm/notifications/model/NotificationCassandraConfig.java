@@ -1,13 +1,14 @@
 package com.trecapps.comm.notifications.model;
 
 import com.datastax.oss.driver.api.core.CqlSessionBuilder;
+import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
+import com.datastax.oss.driver.api.core.config.DriverConfigLoader;
 import lombok.SneakyThrows;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.data.cassandra.config.AbstractCassandraConfiguration;
-import org.springframework.data.cassandra.config.CqlSessionFactoryBean;
-import org.springframework.data.cassandra.config.SessionBuilderConfigurer;
+import org.springframework.context.annotation.Primary;
+import org.springframework.data.cassandra.config.*;
 import org.springframework.data.cassandra.repository.config.EnableReactiveCassandraRepositories;
 
 import javax.net.ssl.KeyManagerFactory;
@@ -16,6 +17,8 @@ import javax.net.ssl.TrustManagerFactory;
 import java.io.*;
 import java.security.KeyStore;
 import java.security.cert.CertificateException;
+import java.time.Duration;
+import java.util.Locale;
 
 /**
  * Needed for customizing the SSL Configuration for Azure Cassandra RU mode
@@ -35,6 +38,9 @@ public class NotificationCassandraConfig extends AbstractCassandraConfiguration 
 
     @Value("${spring.cassandra.port}")
     int port;
+
+    @Value("${spring.cassandra.schema-action}")
+    String schemaAction;
 
     @Value("${spring.cassandra.username}")
     String username;
@@ -95,7 +101,6 @@ public class NotificationCassandraConfig extends AbstractCassandraConfiguration 
     /// This was the piece needed to get the app to run locally
     ///
     @SneakyThrows
-
     SSLContext sslContext() {
         final KeyStore keyStore = KeyStore.getInstance("JKS");
 
@@ -121,6 +126,20 @@ public class NotificationCassandraConfig extends AbstractCassandraConfiguration 
         return sc;
     }
 
+
+    @Bean
+    @Primary
+    public SessionFactoryFactoryBean cassandraFactorySession(CqlSessionFactoryBean sessionBean){
+        SessionFactoryFactoryBean bean = new SessionFactoryFactoryBean();
+        bean.setSession(sessionBean.getObject());
+        bean.setSchemaAction(SchemaAction.valueOf(schemaAction.toUpperCase(Locale.ROOT)));
+        bean.setConverter(cassandraConverter());
+
+
+
+        return bean;
+    }
+
     ///
     /// Custom Cassandra Session
     ///
@@ -143,7 +162,14 @@ public class NotificationCassandraConfig extends AbstractCassandraConfiguration 
         bean.setPassword(password);
 
         SessionBuilderConfigurer configurer = (CqlSessionBuilder builder) -> {
-            return builder.withSslContext(sslContext());
+            return builder.withSslContext(sslContext())
+                    .withConfigLoader(
+                            DriverConfigLoader
+                                    .programmaticBuilder()
+                                    .withDuration(DefaultDriverOption.REQUEST_TIMEOUT, Duration.ofMillis(15000))
+                                    .build()
+                    )
+                    ;
         };
 
         bean.setSessionBuilderConfigurer(configurer);

@@ -21,11 +21,11 @@ import java.util.UUID;
 public interface NotificationRepo extends ReactiveCassandraRepository<NotificationEntry, NotificationEntryId> {
 
     @Modifying
-    @Query("delete from notification_entry ne where ne.profile_id = :profileId and ne.update_time < :time")
+    @Query("delete from notification_entry where profile_id = :profileId and update_time < :time")
     Mono<Void> deleteEntriesByProfile(String profileId, Instant time);
 
     @Modifying
-    @Query("delete from notification_entry ne where ne.profile_id = :profileId and ne.app_id = :appId and ne.update_time < :time")
+    @Query("delete from notification_entry where profile_id = :profileId and app_id = :appId and update_time < :time")
     Mono<Void> deleteEntriesByProfile(String profileId, String appId, Instant time);
 
     default Mono<Void> deleteEntriesByUser(String userId, Instant time) {
@@ -45,16 +45,16 @@ public interface NotificationRepo extends ReactiveCassandraRepository<Notificati
     }
 
 
-    @Query("select * from notification_entry ne where ne.profile_id = :profileId")
+    @Query("select * from notification_entry where profile_id = :profileId")
     Flux<NotificationEntry> getNotificationsByProfile(String profileId, Pageable page);
 
-    @Query("select * from notification_entry ne where ne.profile_id = :profileId and ne.app_id = :appId")
+    @Query("select * from notification_entry where profile_id = :profileId and app_id = :appId")
     Flux<NotificationEntry> getNotificationsByProfile(String profileId, String appId, Pageable page);
 
-    @Query("select * from notification_entry ne where ne.profile_id = :profileId and ne.app_id = :appId and ne.update_time > :time")
+    @Query("select * from notification_entry where profile_id = :profileId and app_id = :appId and update_time > :time")
     Flux<NotificationEntry> getNotificationsByAfter(String profileId, String appId, Instant time);
 
-    @Query("select * from notification_entry ne where ne.unique_id IN :uniqueIds")
+    @Query("select * from notification_entry where unique_id IN :uniqueIds")
     Flux<NotificationEntry> findAllByUniqueIds(List<String> uniqueIds);
 
     default Flux<NotificationEntry> getNotificationsByUserIdAndAppId(String userId, String appId, int size, int page)

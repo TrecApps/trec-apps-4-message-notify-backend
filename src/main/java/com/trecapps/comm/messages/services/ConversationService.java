@@ -67,6 +67,11 @@ public class ConversationService extends ProfileSorterService{
                     conversation.getApps().add(appId);
                     conversation.setId(UUID.randomUUID());
                     conversation.getProfiles().addAll(profiles);
+                    String callerProfile =
+                            brand == null ?
+                                    String.format("User-%s", user.getId()) :
+                                    String.format("Brand-%s", brand.getId());
+                    conversation.getProfiles().add(callerProfile);
                     return conversationRepo.save(conversation);
                 })
                 .map((Conversation conversation) ->
