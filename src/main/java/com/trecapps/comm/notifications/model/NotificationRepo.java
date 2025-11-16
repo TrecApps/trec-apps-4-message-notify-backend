@@ -51,10 +51,14 @@ public interface NotificationRepo extends ReactiveCassandraRepository<Notificati
     @Query("select * from notification_entry where profile_id = :profileId and app_id = :appId")
     Flux<NotificationEntry> getNotificationsByProfile(String profileId, String appId, Pageable page);
 
-    @Query("select * from notification_entry where profile_id = :profileId and app_id = :appId and update_time > :time")
+    @Query("select * from notification_entry where profile_id = :profileId and app_id = :appId and update_time > :time ALLOW FILTERING")
     Flux<NotificationEntry> getNotificationsByAfter(String profileId, String appId, Instant time);
 
-    @Query("select * from notification_entry where unique_id IN :uniqueIds")
+    @Query("select * from notification_entry where profile_id = :profileId and app_id = :appId " +
+            "and create_time = :createTime and unique_id = :uniqueId ALLOW FILTERING")
+    Flux<NotificationEntry> findByUniqueId(String profileId, String appId, Instant createTime, String uniqueId);
+
+    @Query("select * from notification_entry where unique_id IN :uniqueIds ALLOW FILTERING")
     Flux<NotificationEntry> findAllByUniqueIds(List<String> uniqueIds);
 
     default Flux<NotificationEntry> getNotificationsByUserIdAndAppId(String userId, String appId, int size, int page)

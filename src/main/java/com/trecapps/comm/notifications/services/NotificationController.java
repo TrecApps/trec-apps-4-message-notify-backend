@@ -6,6 +6,7 @@ import com.trecapps.auth.common.models.TrecAuthentication;
 import com.trecapps.base.notify.models.Notification;
 import com.trecapps.base.notify.models.NotificationMarkPost;
 import com.trecapps.base.notify.models.ResponseObj;
+import com.trecapps.comm.notifications.model.NotificationDto;
 import com.trecapps.comm.notifications.model.NotificationPost;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -54,6 +55,7 @@ public class NotificationController {
     Mono<ResponseEntity<ResponseObj>> markNotifications(
             Authentication authentication,
             @RequestParam(required = false) String appId,
+            @RequestParam(required = false) OffsetDateTime time,
             @RequestBody NotificationMarkPost markPost
     ){
         TrecAuthentication trecAuthentication = (TrecAuthentication) authentication;
@@ -63,24 +65,25 @@ public class NotificationController {
                 user.getId(),
                 brands == null ? null: brands.getId(),
                 appId,
-                markPost)
+                markPost, time)
                 .map((ResponseObj obj) -> new ResponseEntity<>(obj, HttpStatusCode.valueOf(obj.getStatus())));
     }
 
     @GetMapping
-    Mono<List<Notification>> getNotifications(
+    Mono<List<NotificationDto>> getNotifications(
             Authentication authentication,
             @RequestParam String appId,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size
     ){
         return notificationService.getNotifications(
-                (TrecAuthentication) authentication, appId, size, page);
+                (TrecAuthentication) authentication, appId, size, page)
+                ;
 
     }
 
     @GetMapping("/After")
-    Mono<List<Notification>> getNotifications(
+    Mono<List<NotificationDto>> getNotifications(
             Authentication authentication,
             @RequestParam String appId,
             @RequestParam OffsetDateTime time

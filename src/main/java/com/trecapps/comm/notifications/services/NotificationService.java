@@ -3,10 +3,7 @@ package com.trecapps.comm.notifications.services;
 import com.trecapps.auth.common.models.TcBrands;
 import com.trecapps.auth.common.models.TrecAuthentication;
 import com.trecapps.base.notify.models.*;
-import com.trecapps.comm.notifications.model.NotificationEntry;
-import com.trecapps.comm.notifications.model.NotificationEntryId;
-import com.trecapps.comm.notifications.model.NotificationPost;
-import com.trecapps.comm.notifications.model.NotificationRepo;
+import com.trecapps.comm.notifications.model.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -14,6 +11,8 @@ import reactor.core.publisher.Mono;
 
 import java.time.Instant;
 import java.time.OffsetDateTime;
+import java.time.ZoneOffset;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -64,29 +63,47 @@ public class NotificationService {
                 .thenReturn(ResponseObj.getInstance(HttpStatus.OK, "Success"));
     }
 
-    Mono<ResponseObj> markNotification(String userId, String brandId, String appId, NotificationMarkPost markPost)
+    Mono<ResponseObj> markNotification(String userId, String brandId, String appId, NotificationMarkPost markPost, OffsetDateTime time)
     {
         return Mono.just(markPost)
-                .flatMap((NotificationMarkPost mp) ->
-                    this.notificationRepo.findAllByUniqueIds(mp.getNotifications()).collectList()
+                .flatMap((NotificationMarkPost mp) -> {
+                    if(mp.getNotifications().size() > 1)
+                        return this.notificationRepo.findAllByUniqueIds(mp.getNotifications()).collectList();
+                    if(mp.getNotifications().size() == 1 && time != null)
+                        return this.notificationRepo.findByUniqueId(
+                                brandId == null ? String.format("User-%s", userId) : String.format("Brand-%s", brandId),
+                                appId,
+                                time.toInstant(),
+                                mp.getNotifications().getFirst()
+                        ).collectList();
+                    List<NotificationEntry> ret = new ArrayList<>();
+                    return Mono.just(ret);
+                }
+
                 )
-                .map((List<NotificationEntry> entries) -> {
+                .flatMap((List<NotificationEntry> entries) -> {
                     for(NotificationEntry entry: entries)
                     {
                         if(!entry.isOwner(userId, brandId, appId))
-                            return ResponseObj.getInstance(HttpStatus.UNAUTHORIZED, "Notification does not belong to you");
+                            return Mono.just(ResponseObj.getInstance(HttpStatus.UNAUTHORIZED, "Notification does not belong to you"));
                     }
 
                     for(NotificationEntry entry:entries){
                         entry.setStatus(markPost.getStatus());
                     }
 
-                    this.notificationRepo.saveAll(entries);
-                    return ResponseObj.getInstance(HttpStatus.OK, "Success");
+                    return this.notificationRepo.saveAll(entries)
+                            .collectList()
+                            .map((List<NotificationEntry> entries1) -> {
+                                ResponseObj ret = ResponseObj.getInstance(HttpStatus.OK, "Success");
+                                List<String> idList = entries1.stream().map((NotificationEntry e) -> e.getId().getUniqueId()).toList();
+                                ret.setId(String.join(";", idList));
+                                return ret;
+                            });
                 });
     }
 
-    Mono<List<Notification>> getNotificationsAfter(TrecAuthentication auth, String appId, OffsetDateTime time){
+    Mono<List<NotificationDto>> getNotificationsAfter(TrecAuthentication auth, String appId, OffsetDateTime time){
         return Mono.just(auth)
                 .flatMap((TrecAuthentication notifyAuth) -> {
                     TcBrands brandId = notifyAuth.getBrand();
@@ -96,18 +113,25 @@ public class NotificationService {
                             String.format("User-%s",notifyAuth.getUser().getId()), appId, time.toInstant()).collectList();
                 })
                 .map((List<NotificationEntry> entries) -> {
-                    return entries.stream().map((NotificationEntry entry) -> {
-                        Notification notification = new Notification();
-                        notification.setPost(entry.getNotifyPost());
-                        notification.setNotificationId(entry.getId().getUniqueId());
-                        notification.setStatus(entry.getStatus());
-                        notification.setApp(entry.getId().getAppId());
-                        return notification;
-                    }).toList();
+                    return entries.stream()
+                            .filter((NotificationEntry entry) -> {
+                                Instant timeAsInstant = entry.getTime();
+                                OffsetDateTime timeAsOffset =timeAsInstant.atOffset(ZoneOffset.UTC);
+                                return timeAsOffset.isAfter(time);
+                            })
+                            .map((NotificationEntry entry) -> {
+                                Notification notification = new Notification();
+                                notification.setPost(entry.getNotifyPost());
+                                notification.setNotificationId(entry.getId().getUniqueId());
+                                notification.setStatus(entry.getStatus());
+                                notification.setApp(entry.getId().getAppId());
+                                return notification;
+                            })
+                            .map(NotificationDto::getInstance).toList();
                 });
     }
 
-    Mono<List<Notification>> getNotifications(TrecAuthentication auth, String appId, int size, int page)
+    Mono<List<NotificationDto>> getNotifications(TrecAuthentication auth, String appId, int size, int page)
     {
         return Mono.just(auth)
                 .flatMap((TrecAuthentication notifyAuth) -> {
@@ -124,7 +148,8 @@ public class NotificationService {
                         notification.setStatus(entry.getStatus());
                         notification.setApp(entry.getId().getAppId());
                         return notification;
-                    }).toList();
+                    })
+                            .map(NotificationDto::getInstance).toList();
                 });
     }
 
