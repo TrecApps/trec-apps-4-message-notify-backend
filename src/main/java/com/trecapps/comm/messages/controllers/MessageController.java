@@ -1,7 +1,7 @@
 package com.trecapps.comm.messages.controllers;
 
 import com.trecapps.auth.common.models.TrecAuthentication;
-import com.trecapps.base.notify.models.ResponseObj;
+import com.trecapps.comm.common.ResponseObj;
 import com.trecapps.comm.messages.models.Message;
 import com.trecapps.comm.messages.services.MessageService;
 import org.springframework.beans.factory.annotation.Autowired;

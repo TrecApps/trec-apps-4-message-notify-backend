@@ -46,7 +46,16 @@ public class MessageNotifyService {
                                         )
                         );
 
-                        post.setAppId(conversation.getApps().toString());
+                        String apps = conversation.getApps().toString();
+                        if(apps != null){
+                            if(apps.startsWith("["))
+                                apps = apps.substring(1);
+                            if(apps.endsWith("]"))
+                                apps = apps.substring(0,apps.length() - 1);
+                            apps = apps.trim();
+                        }
+
+                        post.setAppId(apps);
 
                         if(profile.startsWith("User-")){
                             post.setType(ImageEndpointType.USER_PROFILE);

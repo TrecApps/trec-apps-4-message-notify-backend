@@ -1,7 +1,7 @@
 package com.trecapps.comm.messages.services;
 
 import com.trecapps.auth.common.models.TrecAuthentication;
-import com.trecapps.base.notify.models.ResponseObj;
+import com.trecapps.comm.common.ResponseObj;
 import com.trecapps.comm.common.ObjectResponseException;
 import com.trecapps.comm.messages.models.*;
 import com.trecapps.comm.messages.repos.ConversationRepo;
@@ -90,7 +90,8 @@ public class MessageService extends ProfileSorterService{
 
 
                                 OffsetDateTime now = OffsetDateTime.now();
-                                newMessage.setFirstMade(now);
+                                newMessage.setFirstMade(now//.toInstant()
+                                );
 
                                 MessageVersion firstVersion = new MessageVersion();
                                 firstVersion.setMessage(message);

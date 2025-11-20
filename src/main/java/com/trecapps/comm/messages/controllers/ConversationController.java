@@ -2,7 +2,7 @@ package com.trecapps.comm.messages.controllers;
 
 import com.azure.core.annotation.Post;
 import com.trecapps.auth.common.models.TrecAuthentication;
-import com.trecapps.base.notify.models.ResponseObj;
+import com.trecapps.comm.common.ResponseObj;
 import com.trecapps.comm.messages.models.Conversation;
 import com.trecapps.comm.messages.services.ConversationService;
 import org.springframework.beans.factory.annotation.Autowired;

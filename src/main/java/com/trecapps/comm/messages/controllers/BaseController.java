@@ -1,6 +1,6 @@
 package com.trecapps.comm.messages.controllers;
 
-import com.trecapps.base.notify.models.ResponseObj;
+import com.trecapps.comm.common.ResponseObj;
 import org.springframework.http.ResponseEntity;
 
 public class BaseController {
