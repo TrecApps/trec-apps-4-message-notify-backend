@@ -1,11 +1,11 @@
 package com.trecapps.comm.messages.services;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.annotation.Order;
-import org.springframework.http.converter.json.Jackson2ObjectMapperBuilder;
 
 @Configuration
 @Order(0)
@@ -20,7 +20,7 @@ public class NotifyProducerConfig {
     IMessageProducer getProducerServiceBusEntra(
             @Value("${trecapps.message.producer.queue}") String queue,
             @Value("${trecapps.message.producer.namespace}") String namespace,
-            Jackson2ObjectMapperBuilder objectMapperBuilder) {
+            ObjectMapper objectMapperBuilder) {
         return new ServiceBusMessageProducer(queue, namespace, objectMapperBuilder, false);
     }
 
@@ -33,7 +33,7 @@ public class NotifyProducerConfig {
     IMessageProducer getProducerServiceBusConnString(
             @Value("${trecapps.message.producer.queue}") String queue,
             @Value("${trecapps.message.producer.connection}") String connection,
-            Jackson2ObjectMapperBuilder objectMapperBuilder) {
+            ObjectMapper objectMapperBuilder) {
         return new ServiceBusMessageProducer(queue, connection, objectMapperBuilder, true);
     }
 }

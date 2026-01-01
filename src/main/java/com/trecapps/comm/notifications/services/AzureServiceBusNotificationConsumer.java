@@ -10,7 +10,6 @@ import com.fasterxml.jackson.databind.SerializationFeature;
 import com.trecapps.base.notify.models.*;
 import com.trecapps.comm.notifications.model.NotificationPost;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.http.converter.json.Jackson2ObjectMapperBuilder;
 
 @Slf4j
 public class AzureServiceBusNotificationConsumer implements INotificationConsumer{
@@ -19,7 +18,7 @@ public class AzureServiceBusNotificationConsumer implements INotificationConsume
 
     ObjectMapper objectMapper;
 
-    AzureServiceBusNotificationConsumer(String queue, String connector, Jackson2ObjectMapperBuilder objectMapperBuilder1, boolean useConnectionString) {
+    AzureServiceBusNotificationConsumer(String queue, String connector, ObjectMapper objectMapperBuilder1, boolean useConnectionString) {
         if (useConnectionString) {
             this.processorClient = (new ServiceBusClientBuilder())
                     .connectionString(connector)
@@ -35,7 +34,7 @@ public class AzureServiceBusNotificationConsumer implements INotificationConsume
                     .queueName(queue).processMessage(this::processMessage).processError(this::processError).buildProcessorClient();
         }
 
-        this.objectMapper = objectMapperBuilder1.createXmlMapper(false).build();
+        this.objectMapper = objectMapperBuilder1;
         this.objectMapper.configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false);
 
     }

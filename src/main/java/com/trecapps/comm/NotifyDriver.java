@@ -1,25 +1,28 @@
 package com.trecapps.comm;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
 import com.microsoft.applicationinsights.attach.ApplicationInsights;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
-import org.springframework.boot.autoconfigure.data.mongo.MongoDataAutoConfiguration;
-import org.springframework.boot.autoconfigure.data.mongo.MongoReactiveDataAutoConfiguration;
-import org.springframework.boot.autoconfigure.data.mongo.MongoReactiveRepositoriesAutoConfiguration;
-import org.springframework.boot.autoconfigure.mongo.MongoAutoConfiguration;
-import org.springframework.boot.autoconfigure.mongo.MongoReactiveAutoConfiguration;
+import org.springframework.boot.mongodb.autoconfigure.MongoAutoConfiguration;
+import org.springframework.boot.mongodb.autoconfigure.MongoReactiveAutoConfiguration;
+//import org.springframework.data.mongodb.config.
+//import org.springframework.boot.autoconfigure.data.ongo.MongoReactiveDataAutoConfiguration;
+//import org.springframework.boot.autoconfigure.data.mongo.MongoReactiveRepositoriesAutoConfiguration;
+//import org.springframework.boot.autoconfigure.mongo.MongoAutoConfiguration;
+//import org.springframework.boot.autoconfigure.mongo.MongoReactiveAutoConfiguration;
+import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
+import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.FilterType;
 import org.springframework.web.reactive.config.EnableWebFlux;
 
 @SpringBootApplication(
         exclude = {
                 MongoAutoConfiguration.class,
-                MongoDataAutoConfiguration.class,
-                MongoReactiveDataAutoConfiguration.class,
-                MongoReactiveAutoConfiguration.class,
-                MongoReactiveRepositoriesAutoConfiguration.class
+                MongoReactiveAutoConfiguration.class
         }
 )
 @ComponentScan(basePackages = {
@@ -38,15 +41,20 @@ import org.springframework.web.reactive.config.EnableWebFlux;
 ))
 @EnableWebFlux
 @EnableAutoConfiguration(exclude={MongoAutoConfiguration.class,
-        MongoDataAutoConfiguration.class,
-        MongoReactiveDataAutoConfiguration.class,
-        MongoReactiveAutoConfiguration.class,
-        MongoReactiveRepositoriesAutoConfiguration.class
+        MongoReactiveAutoConfiguration.class
 })
+@Configuration
 public class NotifyDriver {
     public static void main(String[] args) {
         ApplicationInsights.attach();
         SpringApplication.run(NotifyDriver.class, args);
     }
 
+    @Bean
+    public ObjectMapper objectMapper() {
+        ObjectMapper mapper = new ObjectMapper();
+        // Enable timestamps
+        mapper.configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, true);
+        return mapper;
+    }
 }

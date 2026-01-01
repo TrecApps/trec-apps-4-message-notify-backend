@@ -11,7 +11,6 @@ import com.fasterxml.jackson.databind.SerializationFeature;
 import com.trecapps.comm.notifications.model.NotificationPost;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.http.converter.json.Jackson2ObjectMapperBuilder;
 import reactor.core.publisher.Mono;
 
 @Slf4j
@@ -19,7 +18,7 @@ public class ServiceBusMessageProducer implements IMessageProducer {
     ServiceBusSenderAsyncClient serviceBusSenderClient;
     ObjectMapper objectMapper;
 
-    ServiceBusMessageProducer(String queueName, String connection, Jackson2ObjectMapperBuilder objectMapperBuilder1, boolean useConnectionString) {
+    ServiceBusMessageProducer(String queueName, String connection, ObjectMapper objectMapperBuilder1, boolean useConnectionString) {
         if (useConnectionString) {
             this.serviceBusSenderClient = (new ServiceBusClientBuilder()).connectionString(connection).sender().queueName(queueName).buildAsyncClient();
         } else {
@@ -27,7 +26,7 @@ public class ServiceBusMessageProducer implements IMessageProducer {
             this.serviceBusSenderClient = (new ServiceBusClientBuilder()).fullyQualifiedNamespace(String.format("%s.servicebus.windows.net", connection)).credential(credential).sender().queueName(queueName).buildAsyncClient();
         }
 
-        this.objectMapper = objectMapperBuilder1.createXmlMapper(false).build();
+        this.objectMapper = objectMapperBuilder1;
         this.objectMapper.configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false);
     }
 
