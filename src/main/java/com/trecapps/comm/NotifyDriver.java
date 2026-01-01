@@ -8,11 +8,11 @@ import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.mongodb.autoconfigure.MongoAutoConfiguration;
 import org.springframework.boot.mongodb.autoconfigure.MongoReactiveAutoConfiguration;
-//import org.springframework.data.mongodb.config.
-//import org.springframework.boot.autoconfigure.data.ongo.MongoReactiveDataAutoConfiguration;
-//import org.springframework.boot.autoconfigure.data.mongo.MongoReactiveRepositoriesAutoConfiguration;
-//import org.springframework.boot.autoconfigure.mongo.MongoAutoConfiguration;
-//import org.springframework.boot.autoconfigure.mongo.MongoReactiveAutoConfiguration;
+import org.springframework.boot.data.mongodb.autoconfigure.DataMongoReactiveAutoConfiguration;
+import org.springframework.boot.data.mongodb.autoconfigure.DataMongoAutoConfiguration;
+import org.springframework.boot.data.mongodb.autoconfigure.DataMongoRepositoriesAutoConfiguration;
+import org.springframework.boot.data.mongodb.autoconfigure.DataMongoReactiveRepositoriesAutoConfiguration;
+
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
@@ -22,7 +22,11 @@ import org.springframework.web.reactive.config.EnableWebFlux;
 @SpringBootApplication(
         exclude = {
                 MongoAutoConfiguration.class,
-                MongoReactiveAutoConfiguration.class
+                MongoReactiveAutoConfiguration.class,
+                DataMongoReactiveAutoConfiguration.class,
+                DataMongoAutoConfiguration.class,
+                DataMongoRepositoriesAutoConfiguration.class,
+                DataMongoReactiveRepositoriesAutoConfiguration.class
         }
 )
 @ComponentScan(basePackages = {
@@ -41,7 +45,11 @@ import org.springframework.web.reactive.config.EnableWebFlux;
 ))
 @EnableWebFlux
 @EnableAutoConfiguration(exclude={MongoAutoConfiguration.class,
-        MongoReactiveAutoConfiguration.class
+        MongoReactiveAutoConfiguration.class,
+        DataMongoReactiveAutoConfiguration.class,
+        DataMongoAutoConfiguration.class,
+        DataMongoRepositoriesAutoConfiguration.class,
+        DataMongoReactiveRepositoriesAutoConfiguration.class
 })
 @Configuration
 public class NotifyDriver {
