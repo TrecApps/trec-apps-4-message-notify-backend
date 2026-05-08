@@ -7,12 +7,13 @@ import org.springframework.data.cassandra.core.mapping.PrimaryKeyClass;
 import org.springframework.data.cassandra.core.mapping.PrimaryKeyColumn;
 
 import java.time.Instant;
+import java.util.UUID;
 
 @PrimaryKeyClass
 @Data
 public class NotificationEntryId {
     @PrimaryKeyColumn(type = PrimaryKeyType.PARTITIONED, ordinal = 0, name = "profile_id")
-    String profileId;
+    UUID profileId;
     @PrimaryKeyColumn(type = PrimaryKeyType.CLUSTERED, ordinal = 1, name = "app_id")
     String appId;
 

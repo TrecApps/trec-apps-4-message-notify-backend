@@ -1,13 +1,11 @@
 package com.trecapps.comm.notifications.services;
 
-import com.trecapps.auth.common.models.TcBrands;
-import com.trecapps.auth.common.models.TcUser;
-import com.trecapps.auth.common.models.TrecAuthentication;
-import com.trecapps.base.notify.models.Notification;
 import com.trecapps.base.notify.models.NotificationMarkPost;
 import com.trecapps.base.notify.models.ResponseObj;
 import com.trecapps.comm.notifications.model.NotificationDto;
 import com.trecapps.comm.notifications.model.NotificationPost;
+import com.trecauth.common.model.Account;
+import com.trecauth.common.model.TrecauthAuthentication;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatusCode;
@@ -34,8 +32,8 @@ public class NotificationController {
 
                     if(!worked){
                         log.error(
-                                "Error making notification related to content {} from app {} for user {} and brand {}",
-                                post.getRelevantId(), post.getAppId(), post.getUserId(), post.getBrandId());
+                                "Error making notification related to content {} from app {} for account {}",
+                                post.getRelevantId(), post.getAppId(), post.getAccountId());
                     }
                     return worked;
                 });
@@ -58,12 +56,10 @@ public class NotificationController {
             @RequestParam(required = false) OffsetDateTime time,
             @RequestBody NotificationMarkPost markPost
     ){
-        TrecAuthentication trecAuthentication = (TrecAuthentication) authentication;
-        TcUser user = trecAuthentication.getUser();
-        TcBrands brands = trecAuthentication.getBrand();
+        TrecauthAuthentication trecAuthentication = ((TrecauthAuthentication) authentication);
+        Account account = trecAuthentication.getList().getCurrentAccount();
         return notificationService.markNotification(
-                user.getId(),
-                brands == null ? null: brands.getId(),
+                account.getId(),
                 appId,
                 markPost, time)
                 .map((ResponseObj obj) -> new ResponseEntity<>(obj, HttpStatusCode.valueOf(obj.getStatus())));
@@ -77,7 +73,7 @@ public class NotificationController {
             @RequestParam(defaultValue = "10") int size
     ){
         return notificationService.getNotifications(
-                (TrecAuthentication) authentication, appId, size, page)
+                ((TrecauthAuthentication) authentication).getList().getCurrentAccount(), appId, size, page)
                 ;
 
     }
@@ -89,7 +85,7 @@ public class NotificationController {
             @RequestParam OffsetDateTime time
             ){
         return notificationService.getNotificationsAfter(
-                (TrecAuthentication) authentication, appId, time);
+                ((TrecauthAuthentication) authentication).getList().getCurrentAccount(), appId, time);
 
     }
 
@@ -100,7 +96,7 @@ public class NotificationController {
             @RequestBody List<String> ids
     ) {
         return notificationService.deleteNotifications(
-                (TrecAuthentication) authentication,
+                ((TrecauthAuthentication) authentication).getList().getCurrentAccount(),
                 appId, ids)
                 .map((ResponseObj obj) ->
                         new ResponseEntity<>(obj, HttpStatusCode.valueOf(obj.getStatus())));
@@ -113,7 +109,7 @@ public class NotificationController {
             @RequestParam(defaultValue = "10") int size
     ){
         return notificationService.deleteNotifications(
-                        (TrecAuthentication) authentication,
+                        ((TrecauthAuthentication) authentication).getList().getCurrentAccount(),
                         appId, size)
                 .map((ResponseObj obj) ->
                         new ResponseEntity<>(obj, HttpStatusCode.valueOf(obj.getStatus())));

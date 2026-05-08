@@ -1,7 +1,7 @@
 package com.trecapps.comm.common;
 
-import com.trecapps.auth.webflux.services.TrecAuthManagerReactive;
-import com.trecapps.auth.webflux.services.TrecSecurityContextReactive;
+
+import com.trecauth.webflux.repos.TrecSecurityContextReactive;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
@@ -18,14 +18,12 @@ public class SecurityConfig {
 
     @Autowired
     SecurityConfig(
-                   TrecSecurityContextReactive trecSecurityContext1,
-                   TrecAuthManagerReactive trecAuthManagerReactive)
+                   TrecSecurityContextReactive trecSecurityContext1
+                   )
     {
         trecSecurityContext = trecSecurityContext1;
-        this.trecAuthManagerReactive = trecAuthManagerReactive;
     }
     TrecSecurityContextReactive trecSecurityContext;
-    TrecAuthManagerReactive trecAuthManagerReactive;
 
     String[] restrictedEndpoints = {
             "/Notifications/*",
@@ -54,7 +52,6 @@ public class SecurityConfig {
                         .pathMatchers(restrictedEndpoints).authenticated()
                         .pathMatchers(verifiedEndpoints).hasAuthority("TREC_VERIFIED")
                         .anyExchange().permitAll())
-                .authenticationManager(trecAuthManagerReactive)
                 .securityContextRepository(trecSecurityContext)
 
                 .build();

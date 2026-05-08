@@ -16,7 +16,7 @@ public class Conversation {
     Set<String> apps = new HashSet<>();
 
     @Indexed
-    Set<String> profiles = new HashSet<>();
+    Set<UUID> profiles = new HashSet<>();
 
     int currentPage = 0;
 

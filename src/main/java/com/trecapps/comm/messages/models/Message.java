@@ -22,7 +22,7 @@ public class Message {
     @Indexed
     UUID conversationId;
 
-    String profile;
+    UUID profile;
 
     @JsonFormat(pattern="YYYY-MM-dd HH:mm:ss.SSSZ")
     @Field(targetType = FieldType.DATE_TIME)
@@ -32,7 +32,7 @@ public class Message {
 
     int page;
 
-    Map<String, Reaction> reactions = new HashMap<>();
+    Map<UUID, Reaction> reactions = new HashMap<>();
 
     UUID conversationIdBranch;
 

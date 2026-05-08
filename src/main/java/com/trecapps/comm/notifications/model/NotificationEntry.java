@@ -27,7 +27,7 @@ public class NotificationEntry {
     ImageEndpointType type = ImageEndpointType.REGULAR;
 
     @Column("image_id")
-    String imageId;
+    UUID imageId;
 
 
     String message;
@@ -57,20 +57,15 @@ public class NotificationEntry {
         notifyPost.setTime(time.atOffset(ZoneOffset.UTC));
         notifyPost.setType(type);
         notifyPost.setMessage(message);
-        notifyPost.setImageId(imageId);
+        notifyPost.setImageId(imageId == null ? null : imageId.toString());
         notifyPost.setRelevantId(relevantId);
         return notifyPost;
     }
 
-    public boolean isOwner(String userId, String brandId, String appId)
+    public boolean isOwner(UUID accountId, String appId)
     {
         boolean byApp = this.id.appId == null || this.id.appId.contains(appId);
-        boolean byProfile = false;
-        if(id.profileId.startsWith("User-")){
-            byProfile = id.profileId.substring(5).equals(userId);
-        } else if(id.profileId.startsWith("Brand-")){
-            byProfile = id.profileId.substring(6).equals(brandId);
-        }
+        boolean byProfile = this.id.profileId.equals(accountId);
 
         return (byProfile) && byApp;
     }

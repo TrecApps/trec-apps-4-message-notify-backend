@@ -1,9 +1,9 @@
 package com.trecapps.comm.messages.controllers;
 
-import com.trecapps.auth.common.models.TrecAuthentication;
 import com.trecapps.comm.common.ResponseObj;
 import com.trecapps.comm.messages.models.Message;
 import com.trecapps.comm.messages.services.MessageService;
+import com.trecauth.common.model.TrecauthAuthentication;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -28,7 +28,7 @@ public class MessageController extends BaseController{
             @RequestBody String message
     ) {
         return service.postMessage(
-                (TrecAuthentication) authentication,
+                ((TrecauthAuthentication) authentication).getList(),
                 conversationId,
                 message
         ).map(this::responseObjToEntity);
@@ -41,7 +41,7 @@ public class MessageController extends BaseController{
             @RequestParam int page){
         {
             return service.getMessages(
-                    (TrecAuthentication) authentication,
+                    ((TrecauthAuthentication) authentication).getList(),
                     conversationId,
                     page
             );
@@ -55,7 +55,7 @@ public class MessageController extends BaseController{
             @RequestParam OffsetDateTime time){
         {
             return service.getLatestMessages(
-                    (TrecAuthentication) authentication,
+                    ((TrecauthAuthentication) authentication).getList(),
                     conversationId,
                     time
             );
@@ -68,7 +68,7 @@ public class MessageController extends BaseController{
             @RequestBody List<String> messages
     ) {
         return service.markReaction(
-                (TrecAuthentication) authentication,
+                ((TrecauthAuthentication) authentication).getList(),
                 messages,
                 null
         ).map(this::responseObjToEntity);
@@ -81,7 +81,7 @@ public class MessageController extends BaseController{
             @RequestBody String reaction
     ) {
         return service.markReaction(
-                (TrecAuthentication) authentication,
+                ((TrecauthAuthentication) authentication).getList(),
                 List.of(messageId),
                 reaction
         ).map(this::responseObjToEntity);
@@ -94,7 +94,7 @@ public class MessageController extends BaseController{
             @RequestBody String message
     ) {
         return service.editMessage(
-                (TrecAuthentication) authentication,
+                ((TrecauthAuthentication) authentication).getList(),
                 messageId,
                 message
         ).map(this::responseObjToEntity);

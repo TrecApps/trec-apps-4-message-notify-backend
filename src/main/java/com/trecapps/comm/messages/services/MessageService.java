@@ -1,14 +1,13 @@
 package com.trecapps.comm.messages.services;
 
-import com.trecapps.auth.common.models.TrecAuthentication;
 import com.trecapps.comm.common.ResponseObj;
 import com.trecapps.comm.common.ObjectResponseException;
 import com.trecapps.comm.messages.models.*;
 import com.trecapps.comm.messages.repos.ConversationRepo;
 import com.trecapps.comm.messages.repos.MessageRepo;
+import com.trecauth.common.model.AccountList;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.core.annotation.Order;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -21,7 +20,6 @@ import java.util.Set;
 import java.util.UUID;
 
 @Service
-//@Order(2)
 public class MessageService extends ProfileSorterService{
 
     MessageRepo messageRepo;
@@ -62,10 +60,10 @@ public class MessageService extends ProfileSorterService{
 //    Mono<Void> ensureOneConvoAndParticipant(List)
 
     @Transactional
-    public Mono<ResponseObj> postMessage(TrecAuthentication auth, String conversationId, String message){
+    public Mono<ResponseObj> postMessage(AccountList auth, String conversationId, String message){
 
-        return useProfile(auth)
-                .flatMap((String profile) -> {
+        return Mono.just(auth)
+                .flatMap((AccountList list) -> {
                     UUID conId = null;
                     try{
                         conId = UUID.fromString(conversationId);
@@ -79,14 +77,14 @@ public class MessageService extends ProfileSorterService{
                                 if(conversation.getId() == null)
                                     throw new ObjectResponseException(HttpStatus.NOT_FOUND, "Conversation not found");
 
-                                if(!conversation.getProfiles().contains(profile))
+                                if(!conversation.getProfiles().contains(list.getCurrentAccount().getId()))
                                     throw new ObjectResponseException(HttpStatus.FORBIDDEN, "You are not part of this conversation!");
                             }).flatMap((Conversation conversation) -> {
                                 Message newMessage = new Message();
                                 newMessage.setId(UUID.randomUUID());
                                 newMessage.setPage(conversation.getCurrentPage());
                                 newMessage.setConversationId(conversation.getId());
-                                newMessage.setProfile(profile);
+                                newMessage.setProfile(list.getCurrentAccount().getId());
 
 
                                 OffsetDateTime now = OffsetDateTime.now();
@@ -98,7 +96,7 @@ public class MessageService extends ProfileSorterService{
                                 firstVersion.setMade(now);
                                 newMessage.getMessageVersions().add(firstVersion);
 
-                                conversation.getProfiles().forEach((String profile1) -> {
+                                conversation.getProfiles().forEach((UUID profile1) -> {
                                     newMessage.getReactions().put(profile1, new Reaction());
                                 });
 
@@ -114,9 +112,7 @@ public class MessageService extends ProfileSorterService{
                                         .flatMap((Message nm) -> {
                                             //if(this.notifyService == null) return Mono.just(nm);
 
-                                            String displayName = auth.getUser().getDisplayName();
-                                            if(auth.getBrand() != null)
-                                                displayName = auth.getBrand().getName();
+                                            String displayName = auth.getCurrentAccount().getDisplayName();
 
                                             return this.notifyService.notifyOnMessage(nm, conversation, displayName);
                                         });
@@ -129,9 +125,9 @@ public class MessageService extends ProfileSorterService{
         ;
     }
 
-    public Mono<List<Message>> getMessages(TrecAuthentication auth, String conversationId, int page){
-        return useProfile(auth)
-                .flatMap((String profile)-> {
+    public Mono<List<Message>> getMessages(AccountList auth, String conversationId, int page){
+        return Mono.just(auth)
+                .flatMap((AccountList list)-> {
                     UUID conId = null;
                     try{
                         conId = UUID.fromString(conversationId);
@@ -145,7 +141,7 @@ public class MessageService extends ProfileSorterService{
                                 if(conversation.getId() == null)
                                     throw new ObjectResponseException(HttpStatus.NOT_FOUND, "Conversation not found");
 
-                                if(!conversation.getProfiles().contains(profile))
+                                if(!conversation.getProfiles().contains(list.getCurrentAccount().getId()))
                                     throw new ObjectResponseException(HttpStatus.FORBIDDEN, "You are not part of this conversation!");
                             });
                 })
@@ -154,9 +150,9 @@ public class MessageService extends ProfileSorterService{
                 });
     }
 
-    public Mono<List<Message>> getLatestMessages(TrecAuthentication auth, String conversationId, OffsetDateTime time){
-        return useProfile(auth)
-                .flatMap((String profile)-> {
+    public Mono<List<Message>> getLatestMessages(AccountList auth, String conversationId, OffsetDateTime time){
+        return Mono.just(auth)
+                .flatMap((AccountList list)-> {
                     UUID conId = null;
                     try{
                         conId = UUID.fromString(conversationId);
@@ -170,7 +166,7 @@ public class MessageService extends ProfileSorterService{
                                 if(conversation.getId() == null)
                                     throw new ObjectResponseException(HttpStatus.NOT_FOUND, "Conversation not found");
 
-                                if(!conversation.getProfiles().contains(profile))
+                                if(!conversation.getProfiles().contains(list.getCurrentAccount().getId()))
                                     throw new ObjectResponseException(HttpStatus.FORBIDDEN, "You are not part of this conversation!");
                             });
                 })
@@ -179,9 +175,9 @@ public class MessageService extends ProfileSorterService{
                 });
     }
 
-    public Mono<ResponseObj> markReaction(TrecAuthentication auth, List<String> messageIds, String reactionType){
-        return useProfile(auth)
-                .flatMap((String profile)-> {
+    public Mono<ResponseObj> markReaction(AccountList auth, List<String> messageIds, String reactionType){
+        return Mono.just(auth)
+                .flatMap((AccountList list)-> {
                     List<UUID> messageIdsUuid;
                     try{
                         messageIdsUuid = messageIds.stream().map(UUID::fromString).distinct().toList();
@@ -201,7 +197,7 @@ public class MessageService extends ProfileSorterService{
 
                                 return conversationRepo.findById(conversationIDs.stream().toList().getFirst())
                                         .doOnNext((Conversation conv) -> {
-                                            if(!conv.getProfiles().contains(profile))
+                                            if(!conv.getProfiles().contains(list.getCurrentAccount().getId()))
                                                 throw new ObjectResponseException(HttpStatus.FORBIDDEN, "You are not part of this conversation!");
                                         })
                                         .thenReturn(messages);
@@ -210,7 +206,7 @@ public class MessageService extends ProfileSorterService{
                                 OffsetDateTime now = OffsetDateTime.now();
 
                                 messages.forEach((Message message) -> {
-                                    Reaction reaction = message.getReactions().get(profile);
+                                    Reaction reaction = message.getReactions().get(list.getCurrentAccount().getId());
                                     if(reactionType != null){
                                         reaction.setReaction(reactionType);
                                     }
@@ -225,9 +221,9 @@ public class MessageService extends ProfileSorterService{
     }
 
 
-    public Mono<ResponseObj> editMessage(TrecAuthentication authentication, String messageId, String newMessage){
-        return useProfile(authentication)
-                .flatMap((String profile) -> {
+    public Mono<ResponseObj> editMessage(AccountList authentication, String messageId, String newMessage){
+        return Mono.just(authentication)
+                .flatMap((AccountList list) -> {
                     UUID mId = null;
                     try{
                         mId = UUID.fromString(messageId);
@@ -239,7 +235,7 @@ public class MessageService extends ProfileSorterService{
                             .doOnNext((Message message) -> {
                                 if(message.getId() == null)
                                     throw new ObjectResponseException(HttpStatus.NOT_FOUND, "Conversation not found");
-                                if(!profile.equals(message.getProfile()))
+                                if(!list.getCurrentAccount().getId().equals(message.getProfile()))
                                     throw new ObjectResponseException(HttpStatus.FORBIDDEN, "You can only edit your own messages!");
                             })
                             .flatMap((Message message) -> {

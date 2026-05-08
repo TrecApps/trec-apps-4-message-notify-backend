@@ -10,10 +10,10 @@ import java.util.UUID;
 public interface ConversationRepo extends ReactiveMongoRepository<Conversation, UUID> {
 
     @Query("{'profiles' : ?0}")
-    Flux<Conversation> getConversationsByProfile(String profile);
+    Flux<Conversation> getConversationsByProfile(UUID profile);
 
     @Query("{'profiles' : ?0, 'apps': ?1}")
-    Flux<Conversation> getConversationsByProfileAndApp(String profile, String app);
+    Flux<Conversation> getConversationsByProfileAndApp(UUID profile, String app);
 
 
 }

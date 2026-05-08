@@ -4,11 +4,12 @@ import com.trecapps.base.notify.models.ImageEndpointType;
 import com.trecapps.base.notify.models.NotificationStatus;
 import lombok.Data;
 
+import java.util.UUID;
+
 @Data
 public class NotificationPost {
 
-    String userId;      // The user this applies to
-    String brandId;     // The brand this applies to
+    UUID accountId;     // The Account to notify
     String appId;       // The App that sent this
 
     String relevantId;  // The id of the content this is relevant to
@@ -16,7 +17,7 @@ public class NotificationPost {
 
     // Image Information
     ImageEndpointType type = ImageEndpointType.REGULAR;
-    String imageId;
+    UUID imageId;
 
     String message;
     String category;

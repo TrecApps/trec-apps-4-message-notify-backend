@@ -12,6 +12,7 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.util.List;
+import java.util.UUID;
 
 @Service
 //@ConditionalOnBean(value = IMessageProducer.class)
@@ -29,10 +30,10 @@ public class MessageNotifyService {
         if(this.messageProducer == null) return Mono.just(newMessage);
         return Mono.just(newMessage)
                 .flatMapMany((Message message) -> {
-                    List<String> profiles = conversation.getProfiles().stream()
-                            .filter((String str) -> !str.equals(message.getProfile())).toList();
+                    List<UUID> profiles = conversation.getProfiles().stream()
+                            .filter((UUID str) -> !str.equals(message.getProfile())).toList();
 
-                    List<NotificationPost> posts = profiles.stream().map((String profile) -> {
+                    List<NotificationPost> posts = profiles.stream().map((UUID profile) -> {
                         NotificationPost post = new NotificationPost();
                         String messageContent = message.getMessageVersions().getLast().getMessage();
                         if(messageContent.length() > 47){
@@ -56,14 +57,9 @@ public class MessageNotifyService {
                         }
 
                         post.setAppId(apps);
+                        post.setAccountId(profile);
+                        post.setType(ImageEndpointType.BRAND_PROFILE);
 
-                        if(profile.startsWith("User-")){
-                            post.setType(ImageEndpointType.USER_PROFILE);
-                            post.setUserId(profile.substring(5));
-                        }else {
-                            post.setType(ImageEndpointType.BRAND_PROFILE);
-                            post.setBrandId(profile.substring(6));
-                        }
                         post.setCategory("Message");
                         post.setImageId(profile);
                         post.setRelevantId(conversation.getId().toString());
