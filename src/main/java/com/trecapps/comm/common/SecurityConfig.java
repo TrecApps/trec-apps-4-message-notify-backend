@@ -51,6 +51,10 @@ public class SecurityConfig {
                 .authorizeExchange(exchanges -> exchanges
                         .pathMatchers(restrictedEndpoints).authenticated()
                         .pathMatchers(verifiedEndpoints).hasAuthority("TREC_VERIFIED")
+                        // /ws/** must be permitted at the HTTP layer so the WebSocket upgrade
+                        // request reaches WebSocketHandshakeInterceptor; authentication is
+                        // enforced there and in StompAuthChannelInterceptor.
+                        .pathMatchers("/ws/**").permitAll()
                         .anyExchange().permitAll())
                 .securityContextRepository(trecSecurityContext)
 

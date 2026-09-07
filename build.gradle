@@ -1,6 +1,6 @@
 plugins {
     id 'java'
-    id 'org.springframework.boot' version '4.0.6'
+    id 'org.springframework.boot' version '4.0.8'
     id 'jacoco'
 
     id "io.spring.dependency-management" version "1.1.0"
@@ -19,11 +19,11 @@ repositories {
     mavenCentral()
 
     maven {
-        url trecappsUrl
-        name 'TcMavenRepo'
+        url azureRepoUrl
+        name 'tcMavenRepo'
         credentials {
-            username trecappsRepoUsername
-            password trecappsRepoPassword
+            username azureRepoUsername
+            password azureRepoPassword
         }
     }
 
@@ -35,13 +35,12 @@ jar{
 }
 
 dependencies {
-    implementation 'org.projectlombok:lombok:1.18.42'
-    annotationProcessor 'org.projectlombok:lombok:1.18.42'
+    implementation 'org.projectlombok:lombok:1.18.46'
+    annotationProcessor 'org.projectlombok:lombok:1.18.46'
 
     //Enable Trec-Auth
-    implementation(group: 'com.trecapps.trecauth', name: 'trec-auth-azure', version: '0.0.48')
-    implementation(group: 'com.trecapps.trecauth', name: 'trec-auth-core', version: '0.0.48')
-    implementation(group: 'com.trecapps.trecauth', name: 'trec-auth-mongo', version: '0.0.48')
+    implementation(group: 'com.trecapps.trecauth', name: 'trec-auth-azure', version: '0.0.60')
+    implementation(group: 'com.trecapps.trecauth', name: 'trec-auth-mongo', version: '0.0.60')
 
 
     implementation 'com.trecapps:notification-base:0.0.17'
@@ -59,7 +58,7 @@ dependencies {
     implementation 'org.hibernate:hibernate-core:6.1.6.Final'
     implementation 'org.hibernate:hibernate-entitymanager:5.6.14.Final'
     implementation 'jakarta.validation:jakarta.validation-api:3.0.2'
-    implementation "org.springframework.boot:spring-boot-starter-data-jpa"
+    //implementation "org.springframework.boot:spring-boot-starter-data-jpa"
 
     // Azure Resources
     implementation 'com.azure:azure-messaging-servicebus'
@@ -82,8 +81,14 @@ dependencies {
 
 
 
+    // WebSocket / Kafka (WebSocket messaging feature)
+    implementation 'org.springframework.boot:spring-boot-starter-websocket'
+    implementation 'org.springframework.boot:spring-boot-starter-kafka'
+
     testImplementation platform('org.junit:junit-bom:5.10.0')
     testImplementation 'org.junit.jupiter:junit-jupiter'
+    testImplementation 'net.jqwik:jqwik:1.9.3'
+    testImplementation 'org.springframework.kafka:spring-kafka-test'
 }
 
 test {

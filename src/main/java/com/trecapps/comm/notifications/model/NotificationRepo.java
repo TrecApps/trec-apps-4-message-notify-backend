@@ -5,7 +5,7 @@ import org.springframework.data.cassandra.repository.ReactiveCassandraRepository
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
-import org.springframework.data.jpa.repository.Modifying;
+//import org.springframework.data.jpa.repository.Modifying;
 
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
@@ -20,11 +20,11 @@ import java.util.UUID;
 @Repository
 public interface NotificationRepo extends ReactiveCassandraRepository<NotificationEntry, NotificationEntryId> {
 
-    @Modifying
+    //@Modifying
     @Query("delete from notification_entry where profile_id = :profileId and update_time < :time")
     Mono<Void> deleteEntriesByProfile(UUID profileId, Instant time);
 
-    @Modifying
+    //@Modifying
     @Query("delete from notification_entry where profile_id = :profileId and app_id = :appId and update_time < :time")
     Mono<Void> deleteEntriesByProfile(UUID profileId, String appId, Instant time);
 

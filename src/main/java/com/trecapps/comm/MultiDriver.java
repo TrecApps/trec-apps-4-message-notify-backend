@@ -5,16 +5,18 @@ import com.fasterxml.jackson.databind.SerializationFeature;
 import com.microsoft.applicationinsights.attach.ApplicationInsights;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.boot.webmvc.autoconfigure.WebMvcAutoConfiguration;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.mongodb.repository.config.EnableReactiveMongoRepositories;
+import org.springframework.security.config.annotation.web.configuration.WebSecurityConfiguration;
 import org.springframework.web.reactive.config.EnableWebFlux;
 
-@SpringBootApplication
+@SpringBootApplication(exclude = {WebMvcAutoConfiguration.class})
 @ComponentScan({
-        "com.trecapps.auth.common.*",               // Authentication library
-        "com.trecapps.auth.webflux.*",
+        "com.trecauth.common.*",               // Authentication library
+        "com.trecauth.webflux.*",
         "com.trecapps.comm.common",
         "com.trecapps.comm.notifications.*",
         "com.trecapps.comm.messages.*"

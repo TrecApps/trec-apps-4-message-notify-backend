@@ -5,6 +5,7 @@ import com.trecapps.comm.common.ObjectResponseException;
 import com.trecapps.comm.messages.models.*;
 import com.trecapps.comm.messages.repos.ConversationRepo;
 import com.trecapps.comm.messages.repos.MessageRepo;
+import com.trecapps.comm.messages.websocket.KafkaConversationProducer;
 import com.trecauth.common.model.AccountList;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -30,6 +31,10 @@ public class MessageService extends ProfileSorterService{
 
     int pageSize;
 
+    // Task 9.1: optional field — absent when websocket feature flag is off
+    @Autowired(required = false)
+    KafkaConversationProducer kafkaProducer;
+
     @Autowired
     MessageService(
             MessageRepo messageRepo,
@@ -42,22 +47,6 @@ public class MessageService extends ProfileSorterService{
         this.pageSize = pageSize;
         this.conversationRepo = conversationRepo;
     }
-
-//    Mono<Message> nextMessagePage(Conversation conversation1, Message message, int pageCount){
-//        return Mono.just(conversation1)
-//                .flatMap((Conversation conversation) -> {
-//                    conversation.setCurrentPage(conversation.getCurrentPage() + 1);
-//
-//
-//                    ConversationMarker marker = new ConversationMarker();
-//                    marker.setMessageId(message.getId());
-//                    marker.setMessageMade(message.getFirstMade());
-//                    marker.setPreviousMessages(pageCount);
-//                    conversation.getMarkers().add()
-//                })
-//    }
-
-//    Mono<Void> ensureOneConvoAndParticipant(List)
 
     @Transactional
     public Mono<ResponseObj> postMessage(AccountList auth, String conversationId, String message){
@@ -86,10 +75,8 @@ public class MessageService extends ProfileSorterService{
                                 newMessage.setConversationId(conversation.getId());
                                 newMessage.setProfile(list.getCurrentAccount().getId());
 
-
                                 OffsetDateTime now = OffsetDateTime.now();
-                                newMessage.setFirstMade(now//.toInstant()
-                                );
+                                newMessage.setFirstMade(now);
 
                                 MessageVersion firstVersion = new MessageVersion();
                                 firstVersion.setMessage(message);
@@ -109,20 +96,29 @@ public class MessageService extends ProfileSorterService{
 
                                             return messageRepo.save(newMessage);
                                         })
+                                        // Task 9.2: publish NEW_MESSAGE event after save
+                                        .doOnSuccess((Message savedMessage) -> {
+                                            try {
+                                                if (kafkaProducer != null) {
+                                                    ConversationEvent event = new ConversationEvent(
+                                                            EventType.NEW_MESSAGE,
+                                                            conversation.getId(),
+                                                            list.getCurrentAccount().getId(),
+                                                            savedMessage
+                                                    );
+                                                    kafkaProducer.publishEvent(event);
+                                                }
+                                            } catch (Exception e) {
+                                                // producer failure must never break the reactive chain
+                                            }
+                                        })
                                         .flatMap((Message nm) -> {
-                                            //if(this.notifyService == null) return Mono.just(nm);
-
                                             String displayName = auth.getCurrentAccount().getDisplayName();
-
                                             return this.notifyService.notifyOnMessage(nm, conversation, displayName);
                                         });
                             });
                 })
-                .map((Message newMessage) ->  ResponseObj.getInstance("Created!", newMessage.getId().toString())
-                )
-
-                // To-Do - error handling
-        ;
+                .map((Message newMessage) -> ResponseObj.getInstance("Created!", newMessage.getId().toString()));
     }
 
     public Mono<List<Message>> getMessages(AccountList auth, String conversationId, int page){
@@ -185,7 +181,6 @@ public class MessageService extends ProfileSorterService{
                         throw new ObjectResponseException(HttpStatus.BAD_REQUEST, "Conversation needs to be in UUID format!");
                     }
 
-
                     return messageRepo.findAllById(messageIdsUuid).collectList()
                             .flatMap((List<Message> messages)-> {
                                 Set<UUID> conversationIDs = new HashSet<>();
@@ -216,10 +211,42 @@ public class MessageService extends ProfileSorterService{
 
                                 return messageRepo.saveAll(messages).collectList();
                             })
+                            // Task 9.3: publish MESSAGE_SEEN or MESSAGE_REACTION event after saveAll
+                            .doOnSuccess((List<Message> savedMessages) -> {
+                                try {
+                                    if (kafkaProducer != null && !savedMessages.isEmpty()) {
+                                        UUID conversationId = savedMessages.get(0).getConversationId();
+                                        UUID actorProfileId = list.getCurrentAccount().getId();
+                                        ConversationEvent event;
+                                        if (reactionType == null) {
+                                            // MESSAGE_SEEN: payload is the list of message IDs
+                                            List<UUID> messageIdList = savedMessages.stream()
+                                                    .map(Message::getId)
+                                                    .toList();
+                                            event = new ConversationEvent(
+                                                    EventType.MESSAGE_SEEN,
+                                                    conversationId,
+                                                    actorProfileId,
+                                                    messageIdList
+                                            );
+                                        } else {
+                                            // MESSAGE_REACTION: payload is the first updated message
+                                            event = new ConversationEvent(
+                                                    EventType.MESSAGE_REACTION,
+                                                    conversationId,
+                                                    actorProfileId,
+                                                    savedMessages.get(0)
+                                            );
+                                        }
+                                        kafkaProducer.publishEvent(event);
+                                    }
+                                } catch (Exception e) {
+                                    // producer failure must never break the reactive chain
+                                }
+                            })
                             .thenReturn(ResponseObj.getInstance(HttpStatus.OK, "Seen!"));
                 });
     }
-
 
     public Mono<ResponseObj> editMessage(AccountList authentication, String messageId, String newMessage){
         return Mono.just(authentication)
@@ -245,12 +272,23 @@ public class MessageService extends ProfileSorterService{
                                 message.getMessageVersions().add(newVersion);
                                 return messageRepo.save(message);
                             })
-                            // ToDo - send message so that when Web Sockets are implemented, users can be informed of any changes
-
-                    ;
+                            // Task 9.4: publish MESSAGE_EDIT event after save
+                            .doOnSuccess((Message savedMessage) -> {
+                                try {
+                                    if (kafkaProducer != null) {
+                                        ConversationEvent event = new ConversationEvent(
+                                                EventType.MESSAGE_EDIT,
+                                                savedMessage.getConversationId(),
+                                                list.getCurrentAccount().getId(),
+                                                savedMessage
+                                        );
+                                        kafkaProducer.publishEvent(event);
+                                    }
+                                } catch (Exception e) {
+                                    // producer failure must never break the reactive chain
+                                }
+                            });
                 })
                 .thenReturn(ResponseObj.getInstance(HttpStatus.OK, "Successfully Updated"));
-
-        // ToDo - error handling
     }
 }
