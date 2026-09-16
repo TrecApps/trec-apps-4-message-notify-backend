@@ -3,6 +3,7 @@ package com.trecapps.comm.notifications.services;
 import com.trecapps.base.notify.models.*;
 import com.trecapps.comm.notifications.model.*;
 import com.trecauth.common.model.Account;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.http.HttpStatus;
@@ -16,6 +17,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
+@Slf4j
 @Service
 public class NotificationService {
 
@@ -56,7 +58,11 @@ public class NotificationService {
                 .doOnNext((NotificationEntry entry) -> {
                     // ToDo - mechanism to push the notification to user
                 })
-                .thenReturn(ResponseObj.getInstance(HttpStatus.OK, "Success"));
+                .thenReturn(ResponseObj.getInstance(HttpStatus.OK, "Success"))
+                .onErrorResume((Throwable ex) -> {
+                    log.error("Failed to post notification: ", ex);
+                    return Mono.just(ResponseObj.getInstance(HttpStatus.INTERNAL_SERVER_ERROR, ex.getMessage()));
+                });
     }
 
     Mono<ResponseObj> markNotification(UUID accountId, String appId, NotificationMarkPost markPost, OffsetDateTime time)

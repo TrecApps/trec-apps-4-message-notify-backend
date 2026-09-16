@@ -75,7 +75,7 @@ public class StompSubscriptionController {
      *                          the {@code simpSessionAttributes} header; contains
      *                          the {@code profileId} set by the handshake interceptor
      */
-    @SubscribeMapping("/queue/conversations/{conversationId}")
+    @SubscribeMapping("/ws/queue/conversations/{conversationId}")
     public void handleSubscription(
             @DestinationVariable("conversationId") UUID conversationId,
             @Header("simpSessionId") String sessionId,

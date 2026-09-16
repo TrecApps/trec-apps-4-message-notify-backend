@@ -50,11 +50,13 @@ public class SecurityConfig {
                 .logout(ServerHttpSecurity.LogoutSpec::disable)
                 .authorizeExchange(exchanges -> exchanges
                         .pathMatchers(restrictedEndpoints).authenticated()
-                        .pathMatchers(verifiedEndpoints).hasAuthority("TREC_VERIFIED")
+//                        .pathMatchers(verifiedEndpoints).hasAuthority("TREC_VERIFIED")
+                        .pathMatchers(verifiedEndpoints).authenticated()
                         // /ws/** must be permitted at the HTTP layer so the WebSocket upgrade
                         // request reaches WebSocketHandshakeInterceptor; authentication is
                         // enforced there and in StompAuthChannelInterceptor.
                         .pathMatchers("/ws/**").permitAll()
+                        .pathMatchers("/api/websocket-endpoints").permitAll()
                         .anyExchange().permitAll())
                 .securityContextRepository(trecSecurityContext)
 

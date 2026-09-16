@@ -24,9 +24,8 @@ public class Message {
 
     UUID profile;
 
-    @JsonFormat(pattern="YYYY-MM-dd HH:mm:ss.SSSZ")
     @Field(targetType = FieldType.DATE_TIME)
-    OffsetDateTime firstMade;
+    Instant firstMade;
 
     SortedSet<MessageVersion> messageVersions = new TreeSet<>();
 

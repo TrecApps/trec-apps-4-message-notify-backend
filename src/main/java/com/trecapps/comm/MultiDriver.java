@@ -2,6 +2,7 @@ package com.trecapps.comm;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.microsoft.applicationinsights.attach.ApplicationInsights;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
@@ -10,7 +11,6 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.mongodb.repository.config.EnableReactiveMongoRepositories;
-import org.springframework.security.config.annotation.web.configuration.WebSecurityConfiguration;
 import org.springframework.web.reactive.config.EnableWebFlux;
 
 @SpringBootApplication(exclude = {WebMvcAutoConfiguration.class})
@@ -35,6 +35,7 @@ public class MultiDriver {
         ObjectMapper mapper = new ObjectMapper();
         // Enable timestamps
         mapper.configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, true);
+        mapper.registerModule(new JavaTimeModule());
         return mapper;
     }
 }

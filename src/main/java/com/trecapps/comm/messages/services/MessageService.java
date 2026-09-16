@@ -14,6 +14,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import reactor.core.publisher.Mono;
 
+import java.time.Instant;
 import java.time.OffsetDateTime;
 import java.util.HashSet;
 import java.util.List;
@@ -75,7 +76,7 @@ public class MessageService extends ProfileSorterService{
                                 newMessage.setConversationId(conversation.getId());
                                 newMessage.setProfile(list.getCurrentAccount().getId());
 
-                                OffsetDateTime now = OffsetDateTime.now();
+                                Instant now = Instant.now();
                                 newMessage.setFirstMade(now);
 
                                 MessageVersion firstVersion = new MessageVersion();
@@ -198,7 +199,7 @@ public class MessageService extends ProfileSorterService{
                                         .thenReturn(messages);
                             })
                             .flatMap((List<Message> messages) -> {
-                                OffsetDateTime now = OffsetDateTime.now();
+                                Instant now = Instant.now();
 
                                 messages.forEach((Message message) -> {
                                     Reaction reaction = message.getReactions().get(list.getCurrentAccount().getId());
@@ -267,7 +268,7 @@ public class MessageService extends ProfileSorterService{
                             })
                             .flatMap((Message message) -> {
                                 MessageVersion newVersion = new MessageVersion();
-                                newVersion.setMade(OffsetDateTime.now());
+                                newVersion.setMade(Instant.now());
                                 newVersion.setMessage(newMessage);
                                 message.getMessageVersions().add(newVersion);
                                 return messageRepo.save(message);

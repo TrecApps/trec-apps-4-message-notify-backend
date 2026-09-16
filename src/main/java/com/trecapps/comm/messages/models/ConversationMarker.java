@@ -2,6 +2,7 @@ package com.trecapps.comm.messages.models;
 
 import lombok.Data;
 
+import java.time.Instant;
 import java.time.OffsetDateTime;
 import java.util.UUID;
 
@@ -9,7 +10,7 @@ import java.util.UUID;
 public class ConversationMarker implements Comparable<ConversationMarker>{
 
     UUID messageId;
-    OffsetDateTime messageMade;
+    Instant messageMade;
     int previousMessages;
 
     public int compareTo(ConversationMarker other){

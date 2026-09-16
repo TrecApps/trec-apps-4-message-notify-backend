@@ -119,7 +119,7 @@ public class KafkaConversationConsumer {
                 .block();
 
         if (participants == null || participants.isEmpty()) {
-            log.debug(
+            log.info(
                     "No participants found for conversationId={} — discarding event",
                     event.getConversationId());
             return;
@@ -130,7 +130,7 @@ public class KafkaConversationConsumer {
                 event.getConversationId(), participants);
 
         if (targetSessions.isEmpty()) {
-            log.debug(
+            log.info(
                     "No matching sessions on this instance for conversationId={} — discarding event",
                     event.getConversationId());
             return;

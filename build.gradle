@@ -38,12 +38,14 @@ dependencies {
     implementation 'org.projectlombok:lombok:1.18.46'
     annotationProcessor 'org.projectlombok:lombok:1.18.46'
 
+    implementation "com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.22.2"
+
     //Enable Trec-Auth
-    implementation(group: 'com.trecapps.trecauth', name: 'trec-auth-azure', version: '0.0.60')
-    implementation(group: 'com.trecapps.trecauth', name: 'trec-auth-mongo', version: '0.0.60')
+    implementation(group: 'com.trecapps.trecauth', name: 'trec-auth-azure', version: '0.0.61')
+    implementation(group: 'com.trecapps.trecauth', name: 'trec-auth-mongo', version: '0.0.61')
 
 
-    implementation 'com.trecapps:notification-base:0.0.17'
+    implementation 'com.trecapps:notification-base:0.0.19'
     implementation "com.microsoft.azure:applicationinsights-runtime-attach:3.7.6"
 
     implementation("org.springframework.boot:spring-boot-starter-webflux")
@@ -84,6 +86,7 @@ dependencies {
     // WebSocket / Kafka (WebSocket messaging feature)
     implementation 'org.springframework.boot:spring-boot-starter-websocket'
     implementation 'org.springframework.boot:spring-boot-starter-kafka'
+    implementation "org.springframework.boot:spring-boot-starter-actuator"
 
     testImplementation platform('org.junit:junit-bom:5.10.0')
     testImplementation 'org.junit.jupiter:junit-jupiter'

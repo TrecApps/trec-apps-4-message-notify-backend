@@ -1,13 +1,21 @@
 package com.trecapps.comm.messages.websocket;
 
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.server.ServerHttpRequest;
+import org.springframework.http.server.ServerHttpResponse;
 import org.springframework.messaging.simp.config.ChannelRegistration;
 import org.springframework.messaging.simp.config.MessageBrokerRegistry;
+import org.springframework.web.socket.WebSocketHandler;
 import org.springframework.web.socket.config.annotation.EnableWebSocketMessageBroker;
 import org.springframework.web.socket.config.annotation.StompEndpointRegistry;
 import org.springframework.web.socket.config.annotation.WebSocketMessageBrokerConfigurer;
+import org.springframework.web.socket.server.HandshakeInterceptor;
+
+import java.util.Map;
 
 /**
  * Configures the STOMP-over-WebSocket endpoint and wires the authentication
@@ -40,14 +48,44 @@ import org.springframework.web.socket.config.annotation.WebSocketMessageBrokerCo
 @ConditionalOnProperty(name = "trecapps.messaging.websocket.enabled", havingValue = "true")
 public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
 
+    @Slf4j
+    static class WebSocketHandshakeLogger implements HandshakeInterceptor {
+
+        @Override
+        public boolean beforeHandshake(ServerHttpRequest request, ServerHttpResponse response,
+                                       WebSocketHandler wsHandler, Map<String, Object> attributes) throws Exception {
+
+            // This will print exactly what path your Gateway forwarded to Spring Boot
+            log.info("Incoming WebSocket Handshake URI: {}", request.getURI());
+            log.info("Handshake Headers: {}", request.getHeaders());
+
+            return true; // Return true to let the handshake proceed
+        }
+
+        @Override
+        public void afterHandshake(ServerHttpRequest request, ServerHttpResponse response,
+                                   WebSocketHandler wsHandler, Exception exception) {
+            if (exception != null) {
+                log.error("Handshake failed with exception: ", exception);
+            }
+        }
+    }
+
     private final WebSocketHandshakeInterceptor handshakeInterceptor;
     private final StompAuthChannelInterceptor stompAuthChannelInterceptor;
+    WebSocketLoggingInterceptor loggingInterceptor;
+
+    String[] allowedOrigins;
 
     @Autowired
     public WebSocketConfig(WebSocketHandshakeInterceptor handshakeInterceptor,
-                           StompAuthChannelInterceptor stompAuthChannelInterceptor) {
+                           StompAuthChannelInterceptor stompAuthChannelInterceptor,
+                           WebSocketLoggingInterceptor loggingInterceptor,
+                           @Value("${ws.allowed.origins}") String[] allowedOrigins1) {
         this.handshakeInterceptor = handshakeInterceptor;
         this.stompAuthChannelInterceptor = stompAuthChannelInterceptor;
+        this.allowedOrigins = allowedOrigins1;
+        this.loggingInterceptor = loggingInterceptor;
     }
 
     /**
@@ -62,10 +100,13 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
      */
     @Override
     public void registerStompEndpoints(StompEndpointRegistry registry) {
-        registry.addEndpoint("/ws")
-                .addInterceptors(handshakeInterceptor);
+        registry.addEndpoint("/ws/")
+
+                .setAllowedOrigins("*")
+                .addInterceptors(new WebSocketHandshakeLogger(), handshakeInterceptor);
         // No .withSockJS() — native WebSocket only, per design decision.
     }
+
 
     /**
      * Configures the in-memory message broker.
@@ -99,6 +140,7 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
      */
     @Override
     public void configureClientInboundChannel(ChannelRegistration registration) {
-        registration.interceptors(stompAuthChannelInterceptor);
+        registration.interceptors(loggingInterceptor, stompAuthChannelInterceptor);
+
     }
 }

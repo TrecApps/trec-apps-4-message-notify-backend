@@ -102,7 +102,7 @@ public class WebSocketHandshakeInterceptor implements HandshakeInterceptor {
                     .block();
 
             if (accountListOpt == null || accountListOpt.isEmpty()) {
-                log.debug("WebSocket handshake rejected: no account resolved from token");
+                log.info("WebSocket handshake rejected: no account resolved from token");
                 response.setStatusCode(HttpStatus.UNAUTHORIZED);
                 return false;
             }
@@ -117,7 +117,7 @@ public class WebSocketHandshakeInterceptor implements HandshakeInterceptor {
                     .anyMatch(TREC_VERIFIED::equals);
 
             if (!hasTrecVerified) {
-                log.debug("WebSocket handshake rejected: TREC_VERIFIED authority absent for account {}",
+                log.info("WebSocket handshake rejected: TREC_VERIFIED authority absent for account {}",
                         accountList.getMainAccount() != null
                                 ? accountList.getMainAccount().getId()
                                 : "unknown");
@@ -127,7 +127,7 @@ public class WebSocketHandshakeInterceptor implements HandshakeInterceptor {
 
             UUID profileId = accountList.getMainAccount().getId();
             attributes.put(PROFILE_ID_ATTR, profileId);
-            log.debug("WebSocket handshake accepted for profileId={}", profileId);
+            log.info("WebSocket handshake accepted for profileId={}", profileId);
             return true;
 
         } catch (Exception e) {
