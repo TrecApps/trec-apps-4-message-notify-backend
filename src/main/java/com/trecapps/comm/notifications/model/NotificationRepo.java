@@ -42,8 +42,14 @@ public interface NotificationRepo extends ReactiveCassandraRepository<Notificati
             "and create_time = :createTime and unique_id = :uniqueId ALLOW FILTERING")
     Flux<NotificationEntry> findByUniqueId(UUID profileId, String appId, Instant createTime, String uniqueId);
 
-    @Query("select * from notification_entry where unique_id IN :uniqueIds ALLOW FILTERING")
-    Flux<NotificationEntry> findAllByUniqueIds(List<String> uniqueIds);
+    @Query("select * from notification_entry where unique_id = :uniqueId ALLOW FILTERING")
+    Mono<NotificationEntry> findByUniqueId(String uniqueId);
 
+    default Flux<NotificationEntry> findAllByUniqueIds(List<String> uniqueIds) {
+        // ToDo, when Azure Cosmos DB for Cassandra supports the IN clause, migrate to using that.
+        // Until then, using this as a stand-in
 
+        return Flux.fromIterable(uniqueIds)
+                .flatMap(this::findByUniqueId);
+    }
 }

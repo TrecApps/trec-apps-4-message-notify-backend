@@ -41,8 +41,8 @@ dependencies {
     implementation "com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.22.2"
 
     //Enable Trec-Auth
-    implementation(group: 'com.trecapps.trecauth', name: 'trec-auth-azure', version: '0.0.61')
-    implementation(group: 'com.trecapps.trecauth', name: 'trec-auth-mongo', version: '0.0.61')
+    implementation(group: 'com.trecapps.trecauth', name: 'trec-auth-azure', version: '0.0.66')
+    implementation(group: 'com.trecapps.trecauth', name: 'trec-auth-mongo', version: '0.0.66')
 
 
     implementation 'com.trecapps:notification-base:0.0.19'
@@ -84,7 +84,9 @@ dependencies {
 
 
     // WebSocket / Kafka (WebSocket messaging feature)
-    implementation 'org.springframework.boot:spring-boot-starter-websocket'
+    // Native reactive WebSocket support is provided by spring-boot-starter-webflux.
+    // The servlet spring-boot-starter-websocket (which drags in Tomcat/spring-web MVC)
+    // is intentionally NOT used — it conflicts with the reactive Netty stack.
     implementation 'org.springframework.boot:spring-boot-starter-kafka'
     implementation "org.springframework.boot:spring-boot-starter-actuator"
 

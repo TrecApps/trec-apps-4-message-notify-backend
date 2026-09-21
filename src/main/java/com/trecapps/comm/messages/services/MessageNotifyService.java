@@ -61,7 +61,7 @@ public class MessageNotifyService {
                         post.setType(ImageEndpointType.BRAND_PROFILE);
 
                         post.setCategory("Message");
-                        post.setImageId(profile);
+                        post.setImageId(newMessage.getProfile());
                         post.setRelevantId(conversation.getId().toString());
                         post.setRelevantIdSecondary(message.getId().toString());
 

@@ -134,7 +134,7 @@ public class NotificationService {
     {
         return Mono.just(auth)
                 .flatMap((Account notifyAuth) -> {
-                    return notificationRepo.getNotificationsByProfile(notifyAuth.getId(), appId, PageRequest.of(size, page)).collectList();
+                    return notificationRepo.getNotificationsByProfile(notifyAuth.getId(), appId, PageRequest.of(page, size)).collectList();
                 })
                 .map((List<NotificationEntry> entries) -> {
                     return entries.stream().map((NotificationEntry entry) -> {

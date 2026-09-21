@@ -52,11 +52,11 @@ public class SecurityConfig {
                         .pathMatchers(restrictedEndpoints).authenticated()
 //                        .pathMatchers(verifiedEndpoints).hasAuthority("TREC_VERIFIED")
                         .pathMatchers(verifiedEndpoints).authenticated()
-                        // /ws/** must be permitted at the HTTP layer so the WebSocket upgrade
-                        // request reaches WebSocketHandshakeInterceptor; authentication is
-                        // enforced there and in StompAuthChannelInterceptor.
+                        // /ws must be permitted at the HTTP layer so the WebSocket upgrade
+                        // request reaches ConversationWebSocketHandler; authentication is
+                        // enforced there (token/cookie + TREC_VERIFIED) during the handshake.
                         .pathMatchers("/ws/**").permitAll()
-                        .pathMatchers("/api/websocket-endpoints").permitAll()
+                        .pathMatchers("/ws").permitAll()
                         .anyExchange().permitAll())
                 .securityContextRepository(trecSecurityContext)
 

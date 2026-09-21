@@ -6,14 +6,13 @@ import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.microsoft.applicationinsights.attach.ApplicationInsights;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
-import org.springframework.boot.webmvc.autoconfigure.WebMvcAutoConfiguration;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.mongodb.repository.config.EnableReactiveMongoRepositories;
 import org.springframework.web.reactive.config.EnableWebFlux;
 
-@SpringBootApplication(exclude = {WebMvcAutoConfiguration.class})
+@SpringBootApplication
 @ComponentScan({
         "com.trecauth.common.*",               // Authentication library
         "com.trecauth.webflux.*",

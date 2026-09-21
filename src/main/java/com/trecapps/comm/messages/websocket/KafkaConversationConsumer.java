@@ -1,51 +1,52 @@
 package com.trecapps.comm.messages.websocket;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.trecapps.comm.messages.models.ConversationEvent;
-import com.trecapps.comm.messages.repos.ConversationRepo;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
-import org.springframework.kafka.annotation.KafkaListener;
-import org.springframework.messaging.simp.SimpMessagingTemplate;
-import org.springframework.stereotype.Component;
-
 import java.util.Collections;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.kafka.annotation.KafkaListener;
+import org.springframework.stereotype.Component;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.trecapps.comm.messages.models.ConversationEvent;
+import com.trecapps.comm.messages.repos.ConversationRepo;
+
+import lombok.extern.slf4j.Slf4j;
+
 /**
  * Consumes {@link ConversationEvent} records from the Azure Event Hubs Kafka topic
- * and forwards them as STOMP {@code MESSAGE} frames to locally-connected WebSocket
- * clients that are subscribed to the affected conversation.
+ * and pushes them to locally-connected reactive WebSocket clients that are
+ * subscribed to the affected conversation.
  *
  * <h3>Routing logic</h3>
  * <ol>
  *   <li>Deserialise the raw JSON record into a {@link ConversationEvent}.</li>
  *   <li>Look up the {@link com.trecapps.comm.messages.models.Conversation} from
  *       MongoDB to obtain the full participant set.</li>
- *   <li>For each participant, query {@link SessionRegistry} for active session IDs
- *       on this instance.</li>
- *   <li>Filter those sessions to only those that are subscribed to the event's
- *       {@code conversationId} via {@link SubscriptionRegistry}.</li>
- *   <li>Send the event JSON to each matching session via
- *       {@link SimpMessagingTemplate#convertAndSendToUser}.</li>
+ *   <li>For each participant, query {@link SessionRegistry} for live sessions on
+ *       this instance.</li>
+ *   <li>Keep only sessions that are subscribed to the event's
+ *       {@code conversationId}.</li>
+ *   <li>Emit the event JSON into each matching session's sink; the
+ *       {@link ConversationWebSocketHandler} drains the sink to the socket.</li>
  * </ol>
+ *
+ * <h3>Fan-out across instances</h3>
+ * Each instance uses a unique consumer group (see {@code KafkaConfig}), so every
+ * instance receives every event and filters to its own locally-connected,
+ * subscribed sessions. No sticky sessions required.
  *
  * <h3>Error handling</h3>
  * <ul>
- *   <li>Deserialisation failure: the raw record is logged at {@code ERROR} level
- *       and the record is skipped — no exception is rethrown.</li>
- *   <li>Delivery failure to a session: logged at {@code WARN} level; processing
- *       continues for remaining sessions and subsequent records.</li>
- *   <li>Conversation not found in MongoDB: treated as an empty participant set —
- *       the event is silently discarded (no sessions to notify).</li>
+ *   <li>Deserialisation failure: raw record logged at {@code ERROR}, record skipped.</li>
+ *   <li>Conversation not found: treated as an empty participant set — discarded.</li>
+ *   <li>Per-session emit failure: logged at {@code WARN}; processing continues.</li>
  * </ul>
  *
- * <p>This bean is only created when
- * {@code trecapps.messaging.websocket.enabled=true}; in HTTP-only mode the
- * entire WebSocket/Kafka subsystem is absent from the Spring context.
+ * <p>Only active when {@code trecapps.messaging.websocket.enabled=true}.
  *
  * <p><strong>Validates: Requirements 4.1, 4.2, 4.3, 4.4, 4.5, 5.2, 5.4</strong>
  */
@@ -54,27 +55,18 @@ import java.util.stream.Collectors;
 @Slf4j
 public class KafkaConversationConsumer {
 
-    /** STOMP destination template for per-conversation user queues. */
-    private static final String CONVERSATION_DESTINATION = "/queue/conversations/";
-
     private final ObjectMapper objectMapper;
     private final ConversationRepo conversationRepo;
     private final SessionRegistry sessionRegistry;
-    private final SubscriptionRegistry subscriptionRegistry;
-    private final SimpMessagingTemplate messagingTemplate;
 
     @Autowired
     public KafkaConversationConsumer(
             ObjectMapper objectMapper,
             ConversationRepo conversationRepo,
-            SessionRegistry sessionRegistry,
-            SubscriptionRegistry subscriptionRegistry,
-            SimpMessagingTemplate messagingTemplate) {
+            SessionRegistry sessionRegistry) {
         this.objectMapper = objectMapper;
         this.conversationRepo = conversationRepo;
         this.sessionRegistry = sessionRegistry;
-        this.subscriptionRegistry = subscriptionRegistry;
-        this.messagingTemplate = messagingTemplate;
     }
 
     /**
@@ -110,8 +102,8 @@ public class KafkaConversationConsumer {
             return;
         }
 
-        // Look up participants from MongoDB (blocking — Kafka listener runs on a
-        // non-reactive thread managed by Spring Kafka).
+        // Look up participants from MongoDB. The Kafka listener runs on a
+        // non-reactive container thread, so we block for the single lookup.
         Set<UUID> participants = conversationRepo
                 .findById(event.getConversationId())
                 .map(conversation -> (Set<UUID>) conversation.getProfiles())
@@ -125,59 +117,51 @@ public class KafkaConversationConsumer {
             return;
         }
 
-        // Determine which sessions on this instance should receive the event.
-        Set<String> targetSessions = resolveTargetSessions(
+        Set<SessionRegistry.Session> targets = resolveTargetSessions(
                 event.getConversationId(), participants);
 
-        if (targetSessions.isEmpty()) {
+        if (targets.isEmpty()) {
             log.info(
                     "No matching sessions on this instance for conversationId={} — discarding event",
                     event.getConversationId());
             return;
         }
 
-        String destination = CONVERSATION_DESTINATION + event.getConversationId();
-
-        for (String sessionId : targetSessions) {
+        for (SessionRegistry.Session session : targets) {
             try {
-                messagingTemplate.convertAndSendToUser(sessionId, destination, eventJson);
+                session.emit(eventJson);
                 log.debug(
                         "Delivered ConversationEvent to sessionId={}, conversationId={}, eventType={}",
-                        sessionId, event.getConversationId(), event.getEventType());
+                        session.getSessionId(), event.getConversationId(), event.getEventType());
             } catch (Exception e) {
                 log.warn(
                         "Failed to deliver ConversationEvent to sessionId={}, conversationId={}, "
                                 + "eventType={} — continuing",
-                        sessionId, event.getConversationId(), event.getEventType(), e);
+                        session.getSessionId(), event.getConversationId(), event.getEventType(), e);
             }
         }
     }
 
     /**
      * Pure routing method: given a conversation's participant set and the target
-     * {@code conversationId}, returns the set of STOMP session IDs on this instance
-     * that should receive the event.
+     * {@code conversationId}, returns the live sessions on this instance that
+     * should receive the event.
      *
-     * <p>A session qualifies if and only if:
-     * <ol>
-     *   <li>Its owner ({@code profileId}) is in {@code participants}, AND</li>
-     *   <li>The session is subscribed to {@code conversationId} in the
-     *       {@link SubscriptionRegistry}.</li>
-     * </ol>
+     * <p>A session qualifies iff its owner is a participant AND it is subscribed
+     * to the conversation.
      *
-     * <p>This method is package-private to allow direct unit and property-based
-     * testing without going through the full Kafka listener path.
+     * <p>Package-private for direct unit / property-based testing.
      *
      * <p><strong>Validates: Requirements 4.1, 4.2, 4.3 (Property 8)</strong>
      *
      * @param conversationId the conversation whose event is being routed
-     * @param participants   the set of profile UUIDs that are participants of the conversation
-     * @return the set of session IDs that should receive the event; never {@code null}
+     * @param participants   the participant profile UUIDs of the conversation
+     * @return the set of sessions that should receive the event; never {@code null}
      */
-    Set<String> resolveTargetSessions(UUID conversationId, Set<UUID> participants) {
+    Set<SessionRegistry.Session> resolveTargetSessions(UUID conversationId, Set<UUID> participants) {
         return participants.stream()
-                .flatMap(profileId -> sessionRegistry.getSessionIds(profileId).stream())
-                .filter(sessionId -> subscriptionRegistry.isSubscribed(sessionId, conversationId))
+                .flatMap(profileId -> sessionRegistry.getSessions(profileId).stream())
+                .filter(session -> session.isSubscribed(conversationId))
                 .collect(Collectors.toSet());
     }
 }
