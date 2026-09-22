@@ -29,6 +29,10 @@ repositories {
 
 }
 
+springBoot {
+    mainClass = 'com.trecapps.comm.MultiDriver'
+}
+
 jar{
     //archiveClassifier=''
     enabled = false
