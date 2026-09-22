@@ -51,7 +51,7 @@ public class NotificationCassandraConfig extends AbstractCassandraConfiguration 
     @Value("${java.cacerts.loc:/lib/security/cacerts}")
     String cacertsLoc;
 
-    @Value("${java.cacerts.pw:changeit")
+    @Value("${java.cacerts.pw:changeit}")
     String sslKeyStorePassword;
 
 
