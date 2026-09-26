@@ -55,8 +55,7 @@ public class SecurityConfig {
                         // /ws must be permitted at the HTTP layer so the WebSocket upgrade
                         // request reaches ConversationWebSocketHandler; authentication is
                         // enforced there (token/cookie + TREC_VERIFIED) during the handshake.
-                        .pathMatchers("/ws/**").permitAll()
-                        .pathMatchers("/ws").permitAll()
+                        .pathMatchers("/ws/**", "/ws", "/mn-api/ws/**", "/mn-api/ws").permitAll()
                         .anyExchange().permitAll())
                 .securityContextRepository(trecSecurityContext)
 

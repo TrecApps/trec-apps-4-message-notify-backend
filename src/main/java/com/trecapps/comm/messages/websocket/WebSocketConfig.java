@@ -58,7 +58,9 @@ public class WebSocketConfig {
         SimpleUrlHandlerMapping mapping = new SimpleUrlHandlerMapping();
         mapping.setUrlMap(Map.of(
                 "/ws", handler,
-                "/ws/", handler));
+                "/ws/", handler,
+                "/mn-api/ws", handler,
+                "/mn-api/ws/", handler));
         mapping.setOrder(Ordered.HIGHEST_PRECEDENCE);
 
         if (!allowedOrigins.isEmpty()) {
@@ -68,7 +70,9 @@ public class WebSocketConfig {
             cors.setAllowCredentials(true);
             mapping.setCorsConfigurations(Map.of(
                     "/ws", cors,
-                    "/ws/", cors));
+                    "/ws/", cors,
+                    "/mn-api/ws", cors,
+                    "/mn-api/ws/", cors));
         }
         return mapping;
     }
