@@ -5,7 +5,9 @@ import com.trecapps.comm.messages.repos.ConversationRepo;
 import com.trecauth.common.model.AccountList;
 import com.trecauth.webflux.repos.TrecAuthSecurityAsyncParser;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.http.server.reactive.ServerHttpRequest;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.socket.HandshakeInfo;
@@ -64,14 +66,18 @@ public class ConversationWebSocketHandler implements WebSocketHandler {
     private final SessionRegistry sessionRegistry;
     private final ObjectMapper objectMapper;
 
+    boolean printCookieNames;
+
     public ConversationWebSocketHandler(TrecAuthSecurityAsyncParser authParser,
                                         ConversationRepo conversationRepo,
                                         SessionRegistry sessionRegistry,
-                                        ObjectMapper objectMapper) {
+                                        ObjectMapper objectMapper,
+                                        @Value("${ws.print-cookie-names:false}") boolean printCookieNames1) {
         this.authParser = authParser;
         this.conversationRepo = conversationRepo;
         this.sessionRegistry = sessionRegistry;
         this.objectMapper = objectMapper;
+        this.printCookieNames = printCookieNames1;
     }
 
     @Override
@@ -192,8 +198,20 @@ public class ConversationWebSocketHandler implements WebSocketHandler {
      * which the caller translates into closing the socket.
      */
     private Mono<UUID> resolveProfileId(WebSocketSession session) {
-        ServerWebExchange exchange = buildExchange(session);
-        return authParser.extractAccountInfo(exchange)
+
+        return Mono.just(session)
+                .map(this::buildExchange)
+                .doOnNext((ServerWebExchange exchange) -> {
+                    if(this.printCookieNames){
+                        ServerHttpRequest request = exchange.getRequest();
+                        StringBuilder stringBuilder = new StringBuilder("WS Cookies provided ");
+                        for(String cookie: request.getCookies().keySet()){
+                            stringBuilder.append("| ").append(cookie);
+                        }
+                        log.info(stringBuilder.toString());
+                    }
+                })
+                .flatMap(authParser::extractAccountInfo)
                 .flatMap(accountListOpt -> {
                     if (accountListOpt == null || accountListOpt.isEmpty()) {
                         return Mono.empty();
